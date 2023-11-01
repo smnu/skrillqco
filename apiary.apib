@@ -1,0 +1,2409 @@
+FORMAT: 1A
+HOST: https://polls.apiblueprint.org/
+
+# Skrill Quick Checkout Integration Guide 10.0
+
+## ABOUT THIS GUIDE
+
+### Objectives and target audience
+
+This guide provides details on how to connect your website to Skrill Quick Checkout. It is intended for users who have a working knowledge of HTML. The guide covers the steps in the payment process and the information that needs to be passed from your web servers to Skrill, to enable Skrill to process payments.
+
+### PCI disclaimer
+
+In accordance with the Payment Card Industry Data Security Standard in force as updated from time to time ("PCI-DSS"), Skrill will be responsible for the security of all Sensitive User Data (as defined in the Merchant Agreement) processed, stored or transmitted by Skrill when providing the Skrill Services.
+
+### Related documentation
+
+You should use this guide together with the additional Skrill documents described below.
+
+###### Table 1‐1: Other guides
+
+| **Guide** | **Description** |
+| --- | --- |
+| Automated Payments and Merchant Query Interfaces Guide | Describes how to connect to Skrill using the Automated Payments Interface (API) and Merchant Query Interface (MQI). This supports functionality such as merchant queries against the system, sending money and processing refunds. To download a copy of the Automated Payments and Merchant Query Interfaces Guide, click [here](https://www.skrill.com/en/business/integration/)[.](https://www.skrill.com/en/business/integration/) |
+
+### Who to contact for queries
+
+For all support queries, contact the Merchant Services department: Email:
+
+merchantservices@skrill.com **Table 1‐3: Contact numbers**
+
+| **Language** | **Telephone number** | **Operating times (weekdays)** |
+| --- | --- | --- |
+| English | +44 (0) 2083387760 | 8am - 5pm GMT |
+| English US | +1 855 6225 167 | 8am - 6pm EST |
+
+
+# 2.INTRODUCTION
+
+Skrill Quick Checkout is a secure hosted payment page, where you can redirect customers from your website to make a payment through Skrill. Quick Checkout provides customers with access to a range of payment methods, based on their location and your account and integration settings.
+
+Integration to Quick Checkout is simple and requires collecting customer payment information on your website and submitting this to Skrill. Quick Checkout then collects the customer payment details needed to complete the payment and sends these details to the relevant bank or alternative payment provider for authorisation.
+
+After the payment is complete, the customer is returned to your website and you receive a real-time notification of the payment, which includes details of the transaction.
+
+### Skrill payment flow
+
+A simplified illustration of the Skrill payment flow is shown in the figure below.
+
+![](RackMultipart20230727-1-clbscd_html_324395e1548821f7.jpg)
+
+###### Figure 2‐1: Skrill transaction flow
+
+1. When the customer is ready to pay for goods or services on your website, they select the Skrill payment option on your website.
+2. You request a session identifier (SID) by passing customer and transaction details (for example: amount, currency and language) to Quick Checkout.
+3. Skrill returns the generated SID.
+4. Using a Lightbox, redirect the customer to Quick Checkout and include the session identifier in the redirect URL. Skrill displays the Quick Checkout page.
+5. The customer enters their payment information, plus any other details requested, and confirms the transaction.
+6. Skrill requests authorisation for the payment from the customer's bank, third party provider or card issuer.
+7. The bank/provider approves or rejects the transaction.
+8. Skrill displays the Quick Checkout confirmation page, containing the transaction result.
+9. Skrill provides you with an asynchronous notification, sent to your status URL or IPN (instant Payment Notification), confirming the transaction details and status.
+
+### Displaying Skrill as a payment option on your website
+
+When a customer is on the checkout page of your website, there are a number of ways in which you can present the Skrill payment options to them:
+
+- Display Pay by Skrill logos
+- Display logos of specific payment methods
+
+#### Display Pay by Skrill logos
+
+The simplest integration option is to present a generic **Pay by Skrill** logo or button on your website, and then redirect the customer to the Skrill Quick Checkout page, where they can pay using a suitable method or log in to their Skrill account to pay from their account balance. This integration option ensures that your customers always have access to the full range of Skrill payment methods available in their country or region. See the example logos below.
+
+![Shape6](RackMultipart20230727-1-clbscd_html_af40ef0e36499f1c.gif)
+
+You can download a copy of these logos in different sizes from the Skrill Website at:
+
+[https://www.skrill.com/en/merchants/brand-centre](https://www.skrill.com/en/merchants/brand-centre)
+
+#### Display logos of specific payment methods
+
+An alternative option is to present only the logos of the specific payment methods you want to offer your customers through Skrill. For example:
+
+![Shape9](RackMultipart20230727-1-clbscd_html_a05461c50021f1a7.gif)
+
+You can then define, in your HTML code, which payment method to display on the Skrill Quick Checkout page when the customer selects this logo. There are two ways in which this feature can be implemented:
+
+- **Fixed** - only the selected payment method (or methods) is (are) displayed to the customer on Quick Checkout. The first method supplied is preselected (set as the default option).
+- **Flexible** - the selected payment method is displayed as the default option (preselected). Skrill automatically detects the customer's country (using Geolocation or the country parameter passed by the merchant) and displays a localized version of the Quick Checkout page. Only the payment methods available in the customer's country are displayed. The order of the payment methods tabs is based on the popularity and conversion rate for each method in the customer's country.
+
+Co-branded payment method logos for display on your website are available at:
+
+[https://www.skrill.com/en/merchants/brand-centre](https://www.skrill.com/en/merchants/brand-centre)
+
+
+> **Note:** The Payment methods you want to support are specified by including the relevant payment method codes in the payment request submitted to Skrill. Alternatively, it is also possible to request that only specific payment methods be enabled. For details, please contact Skrill Merchant Services.
+
+#### Logo restrictions for non‐EU merchants
+
+> **Note:** Read this section carefully if **your business is located outside of the EU/EEA or the US**.
+
+For Skrill merchants based outside of the US and EU/EEA, Visa and MasterCard logos or brand names must not be used in the payment button that links to Skrill.
+
+The Skrill processing agreement does not give you rights to display Visa and MasterCard acceptance marks on your site, and these logos should not be displayed unless you have obtained the rights to do so under a separate processing agreement.
+
+Our compliance team conduct regular checks to ensure that this rule is enforced and failure to comply may result in suspension of your account.
+
+For more information, see **Quick Checkout for out-of-region merchants on page 2-22**.
+
+### Redirecting customers to Quick Checkout
+
+You can use a standard HTML form to collect and pass payment and customer details to Quick Checkout. See **Example HTML forms on page 8-7** _. When the customer selects the Skrill option, your website should post the HTML form containing their transaction details to: [https://pay.skrill.com](https://pay.skrill.com/)[.](https://pay.skrill.com/)
+
+The HTML form should contain the mandatory hidden input fields listed in _ **Table 2-1 on page 2-5** _.
+
+You should use a secure method of obtaining a session ID before redirecting customers to Skrill, as described in _ **Secure redirection method on page 2-4** _.
+
+###### Tips for improving the customer experience
+
+- Any parameters that you pass through in your HTML form, such as customer **first name**, **last name,** and **email**, will be automatically populated (or populated and hidden) as appropriate, on the Quick Checkout payment pages making it easier for the customer to complete these forms.
+- You can customize the appearance of the Quick Checkout page using the options described in **Chapter 4: Customizing the Quick Checkout Page**.
+- To maximise conversion, Skrill recommends that you redirect customers to the Quick Checkout page in the same browser window.
+
+#### 2.3.1.Secure redirection method
+
+This method can be used to ensure that details of the payment are communicated securely between your server and Skrill.
+
+> **Important!** We strongly recommend that you use this method when redirecting your customers to Skrill, as it does not require sending any payment parameters to their browser. This prevents customers from being able to view or modify any hidden parameters in your source code.
+
+The redirection process is as follows:
+
+1. Your web server makes a standard POST request with the payment parameters, using the '**prepare\_only=1**' parameter (see **Table 2-1** below).
+2. The Skrill server prepares a session for the payment and returns a standard HTTP(S) response.
+3. Your web server takes the body of the response which contains a **SESSION\_ID** value.
+4. Using this SESSION\_ID value the customer can be redirected to:
+
+https://pay.skrill.com/?sid=\<SESSION\_ID\>
+
+The normal flow of events continues. This redirect must happen within 15 minutes of the original request or the session will expire.
+
+> **Note:** The Skrill Payment Platform treats GET/POST requests to the payment URL identically. As a result, you can also use an HTTP GET operation in place of POST in step 1 above and pass the payment parameters as name/value pairs in the query string. Similarly, in Step 4 above you could use a HTTP POST operation and pass the SESSION\_ID value from Step 3 as the sid parameter in the message body.
+> For code examples of how to implement this, see **Redirecting the customer to Skrill on page 5-3**.
+
+#### Secure redirection restriction
+
+The Quick Checkout Secure Restriction service allows merchants to create a whitelist of IP addresses (including ranges) specific to them, so that Gateway transactions are generated only for the IP addresses in the list. When the service is enabled and the list is populated, any request that doesn't have a "SID" in Skrill will be blocked. By default, the service is disabled, and the Gateway allows all payment requests, with no restrictions. Configure the service as follows:
+
+1. Note the IP addresses/address ranges to add to the whitelist.
+2. Log in to your merchant account.
+3. Go to **Settings \> DEVELOPER SETTINGS**.
+4. Under **Quick Checkout Secure Restriction**, set **Enable service** , and then, in the field below, type the IP addresses separated by spaces, or an address range in CIDR notation.
+5. Click **Save**.
+
+#### Parameters to be posted to Quick Checkout
+
+Please review the table below for details of the required and optional parameters that need to be included in your form. For implementation examples, see **Example HTML forms on page 8-7**.
+
+> **Note:** All URL parameters must include the protocol at the front of the URL for example: "https://". For example, instead of ["www.google.co.uk"](http://www.google.co.uk/) you would need to use ["https://www.google.co.uk"](https://www.google.co.uk/).
+
+**Merchant Details**
+
+| **Field name** | **Description / Example** | 
+| --- | --- |
+| pay\_to\_email <br/> *requred* <br/> ```length<= 50``` | Email address of your Skrill merchant account. <br/> Example: ```info@example.com```| 
+| recipient\_description <br/> ```length<=30```| A description to be shown on the Skrill payment page in the logo area if there is no **logo\_url** parameter. If no value is submitted and there is no logo, the **pay\_to\_email** value is shown as the recipient of the payment. <br /> Example: ```Your Company Name```| 
+| transaction\_id <br/> ```length<=100``` | Your unique reference or identification number for the transaction. (**Must** be unique for each payment) <br/> Example: ```A205220``` |
+| return\_url <br /> ```length<=240```| URL to which the customer is returned once the payment is made. If this field is not filled, the Skrill Quick Checkout page closes automatically at the end of the transaction and the customer is returned to the page on your website from where they were redirected to Skrill. A secure return URL option is available. (See **Secure return\_url parameter on page 5-1**.) <br/> Example: ```https://www.example.com/payment.html``` |
+| return\_url\_text <br /> ```length<=35``` | The text on the button when the customer finishes their payment. <br/> Example: ```Return to main website``` |
+| return\_url\_target <br /> ```length<=1```| Specifies a target in which the **return\_url** value is displayed upon successful payment from the customer. Default value is 1. Possible values: <br />1. = '\_top'<br />2. = '\_parent'<br />3. = '\_self'<br />4= '\_blank' <br /> Example: ```3```| 
+| cancel\_url <br /> ```length<=240``` | URL to which the customer is returned if the payment is cancelled or fails. If no cancel URL is provided the Cancel button is not displayed. Example: ```https://www.example.com/payment_cancelled.html``` |
+| cancel\_url\_target <br /> ```length<=1```| Specifies a target in which the **cancel\_url** value is displayed upon cancellation of payment by the customer. Default value is 1. Possible values: <br /> 1. = '\_top'<br />2. = '\_parent'<br />3. = '\_self'<br />4= '\_blank' <br /> Example: ```1```|
+| status\_url<br /> ```length<=400```| URL to which the transaction details are posted after the payment process is complete. Alternatively, you may specify an email address where the results are sent. If the **status\_url** is omitted, no transaction details are sent. <br />Only the following ports are supported: 80, 81, 82, 83, 88, 90, 178, 419, 433, 443, 444, 448, 451, 666, 800, 888, 1025, 1430, 1680, 1888, 1916, 1985, 2006, 2221, 3000, 4111, 4121, 4423, 4440, 4441, 4442, 4443, 4450, 4451, 4455, 4567, 5443, 5507, 5653, 5654, 5656, 5678, 6500, 7000, 7001, 7022, 7102, 7777, 7878, 8000, 8001, 8002, 8011, 8014, 8015, 8016, 8027, 8070, 8080, 8081, 8082, 8085, 8086, 8088, 8090, 8097, 8180, 8181, 8443, 8449, 8680, 8843, 8888, 8989, 9006, 9088, 9443, 9797, 10088, 10443, 12312, 18049, 18079, 18080, 18090, 18443, 20202, 20600, 20601, 20603, 20607, 20611, 21301, 22240, 26004, 27040, 28080, 30080, 37208, 37906, 40002, 40005, 40080, 50001, 60080, 60443 These port restrictions apply to all Skrill status urls. <br /> Example: ```https://www.example.com/process_payment.php``` OR ```mailto: info@example.com``` |
+| status\_url2<br /> ```length<=400```| Second URL to which the transaction details are posted after the payment process is complete. Alternatively, you may specify an email address where the results are sent. The same port restrictions apply as for the status\_url parameter above. <br /> Example: ```https://www.example.com/process_payment.php``` OR ```mailto: info@example.com```|
+| language<br /> ```length<=2``` | 2-letter code of the language used for Skrill's pages. Can be any of the codes in **Language support on page 8-2**. <br/> Example ```EN```|
+| psp\_id<br /> ```length<=16```| Identification of the shop which is the originator of the request. This is used by payment service providers who act as a proxy for other payment methods as well. <br /> Example: ```A205220```|
+| submerchant\_id<br /> ```length<=120```| Identification of the shop which is the originator of the request. This is used by the payment service providers who act as a proxy for other payment methods as well. <br /> Example: ```Payment service provider name``` |
+| submerchant\_name<br /> ```length<=240```| The merchant name listed on the website for which the payment is made. Applicable for resellers <br/> Example: ```Example LTD``` |
+| submerchant\_url<br /> ```length<=240```| URL of the website for which the payment is made. Applicable for resellers. <br/> Example: ```http://www.example.com``` |
+| logo\_url<br /> ```length<=240``` | The URL of the logo which you would like to appear in the top right of the Skrill page. The logo must be accessible via HTTPS or it will not be shown. The logo will be resized to fit. To avoid scaling distortion, the minimum size should be as follows: <br/> - If the logo width \> height - at least 107px width. <br /> - If logo width \> height - at least 65px height. <br /> Avoid large images (much greater than 256 by 256px) to minimise the page loading time. <br /> Example: ```https://www.example.com/logo.svg``` |
+| prepare\_only<br /> ```length<=1``` | Forces only the SID to be returned without the actual page. Useful when using the secure method to redirect the customer to the Gateway. For details, see **Secure redirection method on page 2-4**. Accepted values are **0** (default) and **1** (prepare only). <br/> Example: ```1```|
+| dynamic\_descriptor | When a customer pays through Skrill, Skrill submits a preconfigured descriptor with the transaction, containing your business trading name/ brand name. The descriptor is typically displayed on the bank or credit card statement of the customer. For Klarna and Direct Debit payment methods, you can submit a dynamic\_descriptor, which will override the default value stored by Skrill. See **Adding a descriptor on page 5-2** for more details. <br /> Example: ```ACME Solutions Ltd.``` |
+| rid <br>```length<=100``` | You can pass a unique referral ID or email of an affiliate from which the customer is referred. The rid value must be included within the actual payment request. <br /> Example: ```123456``` |
+| ext\_ref\_id <br>```length<=100``` | You can pass additional identifier in this field in order to track your affiliates. You _ **must** _ inform your account manager about the exact value that will be submitted so that affiliates can be tracked. <br /> Example: ```Affiliate Name``` |
+| merchant\_fields <br>```length<=240```| A comma-separated list of field names that are passed back to your web server when the payment is confirmed (maximum 5 fields). <br /> Example: ```Field1, Field2``` |
+| Field1 <br>```length<=240``` | An example merchant field <br/> Example: ```Value 1``` |
+| Field2 <br>```length<=240``` | An example merchant field <br/> Example: ```Value 2``` |
+| website\_id <br>```length<=50``` | A unique identifier representing the combination of your merchant account and the website from which you're redirecting the customer to the Skrill Quick Checkout. Include this identifier in each payment request initiated from your website. If you have more than one website you'll have separate website IDs for each of the websites you're operating. You can obtain your website ID(s) from your Account Manager or Merchant Services. website\_id is required only for Giropay and iDeal payments. <br/> Example: ```0000001``` |
+
+
+**Customer details**  
+(used to speed up Registration or Payment)
+
+| **Field name** | **Description / Example** | 
+| --- | --- |
+| pay\_from\_email <br>```length<=100```| Email address of the customer who is making the payment. If provided, this field is hidden on the payment form. If left empty, the customer has to enter their email address. <br />Example: ```payer@skrill.com``` |
+| firstname <br>```length<=20``` | Customer's first name. <br />Example: ```John``` |
+| lastname <br>```length<=50``` | Customer's last name. <br />Example: ```Payer``` |
+| date\_of\_birth <br>```length<=8``` | Date of birth of the customer. The format is **ddmmyyyy**. Only numeric values are accepted. If provided this field will be prefilled in the Payment form. This saves time for Skrill Wallet sign-up which requires the customer to enter a date of birth. <br /> Example: ```01121980``` |
+| place\_of\_birth <br>```length<=50```| Customer's place of birth (City). <br/> Example: ```Berlin``` |
+| address <br>```length<=100``` | Customer's address (for example: street). <br/> Example: ```Payer street``` |
+| address2 <br>```length<=100``` | Customer's address (for example: town). <br/> Example: ```Payer town``` |
+| phone\_number <br>```length<=20```| Customer's phone number. Only numeric values are accepted. <br /> Example: ```0207123456``` |
+| postal\_code <br>```length<=9```| Customer's postal code/ZIP Code. Only alphanumeric values are accepted (for example, no punctuation marks or dashes) <br/> Example: ```EC45MQ``` |
+| city <br>```length<=50```| Customer's city or postal area. <br /> Example: ```London``` |
+| state <br>```length<=50```| Customer's state or region. <br /> Example: ```Central London``` |
+| country <br>```length<=3```| Customer's country in the 3-digit ISO Code (see **ISO country codes (3- digit) on page 8-3**). <br /> Example: ```GBR``` |
+| nationality <br>```length<=50```| The nationality of the customer. <br /> Example: ```German``` |
+| merchant\_client\_id <br>```length<=50``` | Unique identifier of the Client with the Merchant (customer id on the merchant's end). **Note:** must be an integer number. <br /> Example: ```123123``` |
+| merchant\_client\_kyc\_level <br>```length<=1``` | Verification level of the Client with the Merchant. Possible values: 1. – not verified<br /> 2. – verified with documents. <br />Example: ```1``` |
+| merchant\_client\_registration\_date | Date of account registration of the Client with the Merchant in a date-time format with a time-zone in the ISO8601 standard. <br />Examples:<br /> ```2016-08-22T14:30:24+02:00[Europ e/Paris]``` <br /> ```2016-08-22T14:30+02:00``` <br /> ```2016-08-22``` <br /><br /> **Notes:** If the session is initiated via query parameters, special characters like "+" must be pre-URL encoded, for example: +02:00 → %2B02:00.<br /> If no time zone is supplied, the CET time zone is selected by default. If no time is supplied, the following time is selected by default: 00:00:00 CET |
+
+
+**Payment details** 
+
+| **Field name** | **Description / Example** | 
+| --- | --- |
+| amount <br/> *requred* <br>```length<=19```| The total amount payable. **Note** : Do not include the trailing zeroes if the amount is a natural number. For example: "**23**" (not "**23.00**"). <br /> Examples: ```39.68``` OR ```39.6``` OR ```39``` |
+| currency <br/> *requred* <br>```length<=3```| 3-letter code of the currency of the amount according to ISO 4217 (see **ISO 4217 currencies on page 8-1**). <br /> Example: ```EUR``` |
+| amount2\_description <br>```length<=240```| You can include a calculation for the total amount payable, which is displayed in the **More information** section in the header of the Skrill payment form. Note that Skrill does not check the validity of this data. <br />Example: ```Product price:``` |
+| amount2 <br>```length<=19```| This amount in the currency defined in the field **currency** will be shown next to **amount2\_description**. <br />Example: ```29.90``` |
+| amount3\_description <br>```length<=240``` | See above <br /> Example: ```Handing fees & charges:``` |
+| amount3 <br>```length<=19```| See above <br /> Example: ```3.10``` |
+| amount4\_description <br>```length<=240``` | See above <br /> Example: ```VAT (20%)``` |
+| amount4 <br>```length<=19```| See above <br /> Example: ```6.60``` |
+| detail1_description <br>```length<=240```| You can show up to five additional details about the product in the **More information** section in the header of Quick Checkout. <br /> Example: ```Product ID:``` |
+| detail1\_text <br>```length<=240```| The **detail1\_text** is shown next to the **detail1\_description** in the More Information section in the header of the payment form with the other payment details. The **detail1\_description** combined with the **detail1\_text** is shown in the more information field of the merchant account history CSV file. Using the example values, this would be **Product ID: 4509334**. <br />**Note:** If a customer makes a purchase using Skrill Wallet this information will also appear in the same field in their account history. | **No \***** See Note **** 1** | 240 | 4509334 |
+| detail2\_description <br>```length<=240```| See above. Note not shown in the account history. <br /> Example: ```Description:``` |
+| detail2\_text <br>```length<=240```| See above. Note not shown in the account history. <br /> Example: ```Romeo and Juliet (W. Shakespeare)``` |
+| detail3\_description <br>```length<=240```| See above. Note not shown in the account history. <br /> Example: ```Special Conditions:``` |
+| detail3\_text <br>```length<=240```| See above. Note not shown in the account history. <br /> Example: ```5-6 days for delivery``` |
+| detail4\_description <br>```length<=240```| See above. Note not shown in the account history. |
+| detail4\_text <br>```length<=240```| See above. Note not shown in the account history. |
+| detail5\_description <br>```length<=240```| See above. Note not shown in the account history. |
+| detail5\_text <br>```length<=240```| See above. Note not shown in the account history. |
+
+
+**Notes:**
+
+1. language, detail1\_text and detail1\_description are not mandatory but are highly recommended for a good user experience. English is used as the default language if no Language is provided.
+2. When using Rapid Transfer, if a customer is to be passed for a straight through redirect, the following parameters are mandatory: firstname, lastname, pay\_from\_email.
+3. merchant\_client_* fields are used for additional risk screening.
+
+**Language Encoding for Text Parameters**
+
+All text fields use UTF-8 encoding. Note however that the Quick Checkout payment form can only display Latin-1 characters.
+
+#### Test Cards and Test Merchant
+
+You may wish to test the Quick Checkout payment flow. You can use our test page at [https://pay.skrill.com/app/demo](https://pay.skrill.com/app/demo) to access the payment form parameters. Set the pay\_to\_email parameter under "Recipient" to a test merchant account, for example: demoqco@sun-fish.com. Set any other parameters as required and click "Pay" to load the Quick Checkout gateway.
+
+**Table 2‐2: Test merchant accounts**
+
+| **Merchant account** | **MQI/API password and secret word** | **Type** |
+| --- | --- | --- |
+| demoqco@sun-fish.com | mqi: skrill123, secretword: skrill | Fixed Payment Options (Fixed Split Gateway) |
+| demoqcoflexible@sun-fish.com | mqi: skrill123, secretword: skrill | Flexible Payment Options (Flexible Split Gateway) |
+| demoqcofixedhh@sun-fish.com | mqi: skrill123, secretword: skrill | Fixed Payment Options (Fixed Split Gateway) with Reduced header option enabled. |
+
+**Warning:** This is the live (production) payment form. If you use a real (non-test) pay\_to\_email merchant account and a valid credit card or standard Skrill account the payments will be processed and deducted from your card or Skrill wallet.
+
+We provide three test cards shown in the table below for use with the test merchant. When using these card numbers enter an expiry date in the future and a random CVV number.
+
+**Table 2‐3: Test cards**
+
+| **Brand** | **Card number** |
+| --- | --- |
+| Mastercard | 5438311234567890 |
+| Visa | 4000001234567890 |
+
+### The Quick Checkout page
+
+The Skrill Quick Checkout page displays the payment details submitted to Skrill, as shown in the example below.
+
+![Shape24](RackMultipart20230727-1-clbscd_html_e966a338c26361.gif)
+
+**Figure 2-2: Example of Skrill payment page**
+
+The customer enters their credit card details and email address, and selects **Pay Now** to confirm the payment.
+
+At any time before the **Pay Now** button is selected, the customer can cancel the payment process and return to your website (to the URL provided in the **'cancel\_url'** field; see **Table 2-1 on page 2-5**).
+
+**Notes:**
+- The Quick Checkout payment page can be customized, as described in **Chapter 4: Customizing the Quick Checkout Page**.
+- Customers who have an existing Skrill account can log in to their account to make payments, as described in **Chapter 3: Skrill Digital Wallet Payments**.
+- Credit and debit card brands are not displayed on Quick Checkout for merchants who are based outside of Skrill's standard region (USA and EU/EEA). For more information, see **Quick Checkout for out-of-region merchants on page 2-22**.
+
+#### Skrill transaction status
+
+When the payment process is completed the '**Successful payment'** message is displayed:
+
+![Shape25](RackMultipart20230727-1-clbscd_html_2115bf32eb5e7fe4.gif)
+
+### 2.5.Skrill status response
+
+When the payment process is complete Skrill sends the details of the transaction to the _ **status\_url** _ page you provided in your payment request (see _ **Table 2-1 on page 2-5** _). This is done with a standard HTTP POST. The Skrill server continues to post the status until a response of HTTP OK (200) is received from your server or the number of posts exceeds 10.
+
+The table below shows the parameters sent to your _ **status\_url** _ page:
+
+###### Table 2‐4: Status URL parameters
+
+| **Field name** | **Description** | **Required** | **Example value** |
+| --- | --- | --- | --- |
+| pay\_to\_email | Your email address. | Yes | info@merchant. com |
+| pay\_from\_email | Email address of the customer who is making the payment. **Note:** If a Skrill wallet account exists with this email, and the Skrill Wallet is one of the available payment method tabs, it will be selected as the default payment method) | Yes | payer123@skrill.com |
+| merchant\_id | Unique ID of your Skrill account. ONLY needed for the calculation of the MD5 signature (see _ **MD5 signature on page 8-6** _). | Yes | 100005 |
+| customer\_id | If the customer pays using a Skrill Wallet, this is the unique ID of their Skrill account. If the customer pays with any other payment method, this is a unique ID for this payment generated by Skrill | No a | 200005 |
+| transaction\_id | A unique reference or identification number provided by you in your HTML form. | No b | A205220 |
+| mb\_transaction\_id | Skrill's internal unique reference ID for this transaction | Yes | 170032056 |
+| mb\_amount | The total amount of the payment in the currency of your merchant Skrill digital wallet account. | Yes | 25.46 / 25.4 / 25 |
+| mb\_currency | Currency of _ **mb\_amount** _. Will always be the same as the currency of your merchant Skrill digital wallet account. | Yes | GBP |
+| status | Status of the transaction: _ **-2** _ failed / _ **2** _ processed / _ **0** _ pending / _ **-1** _ cancelled (see detailed explanation below) | Yes | 2 |
+| failed\_reason\_code | If the transaction has a status value _ **-2** _ (failed), this field will contain a code detailing the reason for the failure. Note that you will need to ask Skrill to enable this feature to receive the code. | No c | 06 |
+
+###### Table 2‐4: Status URL parameters (Continued)
+
+| **Field name** | **Description** | **Required** | **Example value** |
+| --- | --- | --- | --- |
+| md5sig | MD5 signature (see _ **MD5 signature on page 8-6** _). | Yes | 327638C253A4637199CEBA 6642371F20 |
+| sha2sig | SHA2 signature (see _ **SHA2 signature on page 8-7** _). | No d | dbb7101322257a311f08d1c 527053058fc7e464e30bcfb 4613f09053c22dd1f8 |
+| amount | Amount of the payment as posted in your HTML form. | Yes | 39.60 / 39.6 / 39 |
+| currency | Currency of the payment as posted in your HTML form. | Yes | EUR |
+| neteller\_id | If the Neteller payment method is used this parameter contains the Neteller customer's account id or email depending on the details entered by the Neteller customer or the value supplied in the neteller\_account parameter. | No | netellertest\_GBP@neteller. com |
+| payment\_type | The payment method the customer used (see _ **Payment method codes on page 8-9** _). Contact merchant services to enable this option. You can choose to receive either:
+- Consolidated values - there are two values that can be shown: WLT for Skrill account balance payments and MDB for any other payment type for example:
+credit/debit card or alternative payment method. Note that if the customer logs in to their Skrill Wallet but pays by Card the MDB value will be used.
+- Detailed values - this shows the specific instrument used, for example, VSA - Visa card, GIR – giropay, and so on. WLT stands for Skrill account balance in this context. Note that if the customer logs in to their Skrill Wallet but pays using a saved Visa Card the VSA payment code will be returned.
+ | No e | WLT |
+| merchant\_fields | If you submitted a list of values in the _ **merchant\_fields** _ parameter, they will be passed back with the status report. | No | field1=value1 |
+
+1. _ **The customer\_id** _ parameter is enabled upon activation. If you don't receive it in the response sta- tus, please contactSkrill Merchant Services.
+2. If no _ **transaction\_id** _ is submitted, the _ **mb\_transaction\_id** _ value will be posted in the report.
+3. The _ **failed\_reason\_code** _ parameter is enabled upon activation and is part of the response status.
+
+For a description of all failed reason codes, see _ **Failed reason codes on page 8-17** _.
+
+1. To enable the _ **sha2sig** _ parameter, contact merchant services. For more information, see _ **SHA2 sig- nature on page 8-7** _.
+2. The _ **payment\_type** _ parameter is enabled upon activation. If you don't receive it in the response sta- tus, please contactSkrill Merchant Services.
+
+###### Language encoding for text parameters
+
+All text fields use UTF-8 encoding. Note however that the Quick Checkout can only display Latin-1 characters.
+
+###### Validating the status response
+
+We recommend that you validate the transaction details in the status response. This can be done as follows:
+
+1. Create a pending transaction or order for a fixed amount on your website.
+2. Redirect the customer to the Quick Checkout page, where they complete the transaction.
+3. Skrill will post the transaction confirmation to your _ **status\_url** _ page. This will include the _ **mb\_amount** _ (amount) parameter.
+4. Your website should validate the parameters received by calculating the md5 signature (see _ **MD5 signature on page 8-6** _). If successful, it should compare the value in the confirmation post (amount parameter) to the one from the pending transaction or order on your website.
+
+You can also compare other parameters such as _ **transaction id** _ and _ **pay\_from\_email** _. Once you have validated the transaction data you can process the transaction, for example, by dispatching the goods ordered. You must implement measures to ensure that goods are not dispatched multiple times if you receive subsequent successful notifications for the same transaction ID (transaction\_id or mb\_transaction\_id) to protect against replay attacks or other sources of duplicate status posts.
+
+![Shape26](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Note:** If you want to restrict the receipt of status response based on the posting IP address, you should use the full list of Skrill IP ranges as from time to time Skrill may change the IP address used. Any address within any of the following listed ranges could be used. The full list of Skrill IP ranges are:
+
+**91.208.28.0/24, 93.191.174.0/24, 193.105.47.0/24, 195.69.173.0/24** and
+
+**18.156.81.39, 3.64.161.98, 18.195.181.168, 52.16.193.112, 54.228.179.122, 34.249.111.249**
+
+If you are implementing a new integration, please use the second list, as the first one will be soon deprecated.
+
+![Shape27](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+###### Using the Merchant Query Interface
+
+You can use the Merchant Query Interface to repost a status report, to automatically check the status of a transaction, and to issue a refund to a customer. For details, see the [Automated Payments and](https://www.skrill.com/en/business/integration/)[Merchant](https://www.skrill.com/en/business/integration/)[Query](https://www.skrill.com/en/business/integration/)[Interfaces](https://www.skrill.com/en/business/integration/)[Guide](https://www.skrill.com/en/business/integration/)[.](https://www.skrill.com/en/business/integration/)
+
+#### 2.5.1.Detailed status description
+
+**Table 2‐5: Transaction status**
+
+| **#** | **Status** | **Description** |
+| --- | --- | --- |
+| '2' | Processed | Sent when the transaction is processed and the funds have been received in your Skrill account. |
+| '0' | Pending | Sent when the customers pays via an offline bank transfer option. Such transactions will auto-process if the bank transfer is received by Skrill. **Note** : We strongly recommend that you do _ **not** _ process the order or transaction in your system upon receipt of this status from Skrill. |
+| '-1' | Cancelled | Pending transactions can either be cancelled manually by the sender in their online Skrill Digital Wallet account history or they will auto-cancel after 14 days if still pending. |
+| '-2' | Failed | This status is typically sent when the customer tries to pay via Credit Card or Direct Debit but our provider declines the transaction. It can also be sent if the transaction is declined by Skrill's internal fraud engine for example: failed\_reason\_code 54 - Failed due to internal security restrictions. For a description of all failed reason codes, see _ **Failed reason codes on page 8-17** _. |
+| '-3' | Chargeback | Whenever a chargeback is received by Skrill, a '_ **-3** __ **'** _ status is posted in the _ **status\_url** _ and an email is sent to the primary email address linked to the Merchant's account. Skrill also creates a new debit transaction to debit the funds from your merchant account. |
+
+#### 2.5.2.Sales tax/VAT option
+
+Skrill provides a configuration setting to assist merchants to calculate sales/value added tax (VAT). Contact merchant services to enable this option. Once enabled, the following three additional parameters are sent as part of the status response to the status\_urls:
+
+**Table 2‐6: Sales tax status\_url parameters**
+
+| **Parameter** | **Description** |
+| --- | --- |
+| payment\_instrument\_ country | A three letter ISO 3166-1 alpha-3 code showing the country of origin of the payment instrument the customer used. For example, a Visa card for a bank in Germany would return DEU. This value will be blank if no country can be determined for the payment method. If the customer pays using their Skrill wallet balance the payment\_instrument\_country will be the same as the country registered for their Skrill account |
+| country | A three letter ISO 3166-1 alpha-3 country code. If a country parameter is passed to the payment form this value will be used. If customer pays using a Skrill Wallet the country they selected when registering their Skrill account is returned. If none of these situations apply geolocation (using the customer's IP) is used to return a 3 character country code. |
+| IP\_country | A two letter ISO 3166-1 alpha-2 code showing the customer's country as determined by Geolocation using the customer's IP. |
+
+These values are also added to the CSV account history report. This report can be obtained using the view account history Merchant Query Interface option or via the **All Transactions \> Export CSV** option in the **My account** section after logging in to your merchant Skrill account. The following table shows the column names for these parameters in the CSV file:
+
+**Table 2‐7: CSV parameters**
+
+| **Status\_url parameter** | **CSV column name** |
+| --- | --- |
+| payment\_instrument\_country | Instrument Country |
+| country | Country |
+| IP\_country | IP country |
+
+![](RackMultipart20230727-1-clbscd_html_fff9e6f92a304b5.jpg)
+
+**Figure 2‐4: Section of Account History CSV file with Sales Tax fields highlighted in red**
+
+### 2.6.Process for customers who are registered with Skrill
+
+Customers who have already registered for a Skrill Digital Wallet account can log in to their account and pay from the available balance in their account. They can also pay using one of the payment methods linked to their account, or access additional Skrill payment methods and options.
+
+• To log in to their account the customer selects the **Pay by Skrill** tab. The following page is displayed:
+
+![Shape28](RackMultipart20230727-1-clbscd_html_ba71019fc118d978.gif)
+
+###### Figure 2‐5: Pay by Skrill tab
+
+The customer enters their Skrill account email address and password; they then select the **Login** button.
+
+For more information on how customers can access their Skrill Digital Wallet account, and the options available through the Skrill Digital Wallet, see _ **Chapter 3: Skrill Digital Wallet Payments** _.
+
+### 2.7.Securing your Skrill merchant account
+
+It is important to secure your Skrill merchant in case your account password is compromised. Skrill provides three main methods to enhance the security of your account:
+
+•Restricting access to your merchant account to a specific IP address or a list of IP addresses.
+
+![Shape29](RackMultipart20230727-1-clbscd_html_ff03f50f4e48e43.gif)
+
+**Figure 2-6: Out-of-region Quick Checkout introductory screen**
+
+Skrill recommends that you use methods 1 and 2 to secure your account. Alternatively, you can use methods 1 and 3. You cannot use the hardware token together with Google two-factor authentication. These methods are described in detail in the following pages.
+
+#### 2.7.1.Additional security measures
+
+If you are not planning to use the manual send money feature to transfer funds to other Skrill accounts, you can contact Skrill Merchant Servicesto ask them to disable this feature. Automated money transfers using the Skrill Automated Payment Interface are disabled by default.
+
+![Shape30](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+# 3.SKRILL DIGITAL WALLET PAYMENTS
+
+![Shape31](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+Additional payment options are available to customers who choose to register for or pay with their existing Skrill Digital Wallet account. You can enable the Skrill Wallet payment option using the WLT payment code as part of the payment\_methods value field. For example:
+
+\<input type="hidden" name="payment\_methods" value="WLT,ACC"\>
+
+### 3.1.Existing customers accessing their Skrill Wallet account
+
+A registered customer can click the **Pay by Skrill** tab, enter their user name and password, and select the **Login** button (see _ **Pay by Skrill tab on page 2-21** _).
+
+If the customer already has credit or debit cards configured in their Skrill account, they are given the option to select one of these cards to pay as follows:
+
+![Shape32](RackMultipart20230727-1-clbscd_html_b3b2c54c5b2d1a45.gif)
+
+###### Figure 3‐1: Initial Skrill Wallet page
+
+Select a card, enter the CVV number, then click **Pay Now** to process the payment. Customers can also add then pay with a new card using the **+ New card** button.
+
+Alternatively, customers can choose to pay with their Skrill Balance. They can click the **Skrill Balance** tab to display the following screen:
+
+![Shape33](RackMultipart20230727-1-clbscd_html_f5db5538044db346.gif)
+
+###### Figure 3‐2: Pay using Skrill Balance
+
+The customer can now review the payment details and click **Pay Now** to complete the payment. If the customer does not have a sufficient balance, the Skrill Balance will be greyed out, the **Pay Now** option will not show, and an insufficient funds message will be displayed.
+
+### 3.2.Customers who want to register for a Skrill account
+
+New customers do not need to register for a Skrill account, but if they want they can click the **Pay by Skrill** tab or button and select the **Sign Up** link (see _ **Pay by Skrill tab on page 2-21** _). Customer login or sign up is mandatory for certain Skrill payment options, such as Skrill 1-Tap and Recurring Billing. Selecting **Sign Up** will display the following screen:
+
+![Shape34](RackMultipart20230727-1-clbscd_html_6e0d48b2fce54246.gif)
+
+###### Figure 3‐3: Create Skrill account (long version of the form)
+
+The customer can now enter their personal details including date of birth, email address, and password and click **Create Account**. All the parameters provided by the merchant website are prefilled. The rest of the process is the same as that detailed in _ **Existing customers accessing their Skrill Wallet account on page 3-1** _.
+
+![Shape35](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+# 4.CUSTOMIZING THE QUICK CHECKOUT PAGE
+
+![Shape36](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+You can customize the Skrill Quick Checkout page in the following ways:
+
+- _ **Pre-populating payment fields** _
+- _ **Displaying payment and order details** _
+- _ **Preselecting or displaying payment methods** _
+- _ **Displaying specific credit/debit card brands** _
+- _ **Straight Through Redirect** _
+- _ **Displaying your company logo or brand** _
+- _ **Embedding the Quick Checkout page** _
+- _ **Removing or reducing the header and reducing the footer** _
+- _ **Recurring billing** _
+
+### 4.1.Pre‐populating payment fields
+
+To speed up the payment process for the customer, you can supply the following parameters with each transaction:
+
+###### Table 4‐1: Parameters to pre‐populate payment fields
+
+| **Field name** | **Description** | **Max length** | **Example value** |
+| --- | --- | --- | --- |
+| pay\_from\_email | Email address of the customer who is making the payment. If provided, this field is pre- populated (or pre-populated and hidden) as appropriate, on the payment form. It will be pre-populated and hidden for the following payment methods: WCO, POLi, credit/debit card payment, and ePay. If this field is omitted or left empty, the customer has to enter their email address. | 100 | payer@skrill.com |
+| firstname | First name of the customer. This value will be prefilled if the Merchant submits it via the `firstname' parameter | 20 | John |
+| lastname | Last name of the customer. This value will be prefilled if the Merchant submits it via the `lastname' parameter | 50 | Payer |
+
+The following figure shows an example of the Quick Checkout page.
+
+![Shape37](RackMultipart20230727-1-clbscd_html_e0e44f18e72106aa.gif)
+
+###### Figure 4‐1: Skrill page with pre‐populated fields
+
+![Shape38](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Note:** You can include additional parameters, such as the customer's address, city, country, language, postal code, and date of birth. If the customer selects the sign-up link to open a new Skrill Digital Wallet account, these fields will be prefilled on the registration form. If they are all prefilled (address, city, country, and postal code), they will be hidden to simplify the sign-up form. See _ **Chapter 3: Skrill Digital Wallet Payments** _ for more details.
+
+![Shape39](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+### 4.2.Displaying payment and order details
+
+Your payment request can include your own itemised payment details, such as an order description and amount breakdown. The customer can view these payment details by selecting the **information** icon displayed next to the amount and currency.
+
+![](RackMultipart20230727-1-clbscd_html_add10d94304c7f39.jpg)
+
+**Figure 4‐2: Top of payment form shows total amount** Click the icon to display the Payment details overlay screen.
+
+![](RackMultipart20230727-1-clbscd_html_d6548bab2984b5e4.jpg)
+
+###### Figure 4‐3: Payment details screen
+
+You can include up to five additional description fields and three amount fields (see _ **Payment details** _ in _ **Table 2-1 on page 2-5** _). For an example of HTML form, which implements these fields, see _ **Example HTML forms on page 8-7** _.
+
+### 4.3.Preselecting or displaying payment methods
+
+Which payment methods are displayed depends on the configuration setting for your merchant account; there are two options: Fixed or Flexible (also known as Fixed Split Gateway or Flexible Split Gateway). This feature is set up for your account by Skrill. For details, please contact Skrill MerchantServices.
+
+The Fixed option is used to specify the payment methods to display to customers in the Quick Checkout payment form (if these payment methods are available in the customer's country). For example, you can display only Paysafecard, Klarna, and Rapid Transfer on the payment form instead of the generic Skrill options for the customer's country. These methods will appear in the Payment method tabs where their logos will be displayed. For a list of currently supported alternative payment methods and their codes, see _ **Payment method codes on page 8-9** _.
+
+![Shape40](RackMultipart20230727-1-clbscd_html_b145a29512c86d13.gif)
+
+###### Figure 4‐4: Payment method tabs
+
+The Flexible option is used to preselect a payment method and display it in the first payment method tab (if this payment method is available in the customer's country). The other payment methods available in this country are displayed in the other tabs.
+
+![Shape41](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Note:** The customer's country is determined by the country parameter passed to the Skrill Payment platform. If no country parameter is provided, Geolocation is used instead.
+
+![Shape42](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+To use either option, the following parameter must be included in your payment request:
+
+**Table 4‐2: Parameters to include when specifying the payment method**
+
+| **Parameter** | **Description** | **Max**  **length** | **Example value** |
+| --- | --- | --- | --- |
+| payment\_methods | This parameter has a different effect depending on the configuration of your Skrill merchant account (fixed or flexible). For the flexible option, only a single payment method code is used. For the fixed option, you can supply one or more Payment method codes separated by commas. **Note** : If you do not provide a value all the payment methods available in the customer's country are displayed. For a full list of codes, see _ **Payment method codes on page 8-9** _. | 100 | VSA,WLT, PSC |
+
+![Shape43](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Note:** Before implementing this option, you should also confirm which payment methods are available for your account. Restrictions apply for merchants who are based outside of Skrill's standard region (USA and Europe). For details, see _ **Quick Checkout for out-of-region merchants on page 2-22** _.
+
+![Shape44](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+#### 4.3.1.Fixed payment methods
+
+With the Fixed payment option, when you submit a payment method using a single _ **payment\_methods** _ parameter, _ **only that payment method is shown to the customer on the payment form.** _ If the payment method is not supported by the customer's country, the form shows all other available payment methods for this country. If you provide more than one payment method code separated by commas, the first payment method listed is preselected and shown in the first tab. The subsequent payment methods are then shown by order of their popularity in the customer's country. Note that this is used instead of the order they are listed in the _ **payment\_methods** _ parameter.
+
+If a single payment code is used and this payment method is not available in the customer's country, the full list of available payment methods is presented to the customer. For example, if iDEAL was chosen, but the customer is not a Dutch resident. If multiple payment method codes are used, any unavailable payment methods are ignored. The following example shows the fixed payment method option with a single code:
+
+\<input type="hidden" name="payment\_methods" value="ACC"\>
+
+![Shape45](RackMultipart20230727-1-clbscd_html_63a045a4a952b775.gif)
+
+**Figure 4‐5: Fixed payment methods ‐ Cards only**
+
+**4.3.1.1.Displaying specific credit/debit card brands**
+
+By default, all card brands are displayed on Quick Checkout. You can override the default behaviour, by specifying the card brand you want to display on the payment form. This option only works with the Fixed payment method option. Use the _ **ACC** _ payment method code to display all available card brands. Only one card payment tab is permitted. See the example below.
+
+\<input type="hidden" name="payment\_methods" value="VSA"\>
+
+![Shape46](RackMultipart20230727-1-clbscd_html_9522e31a66d5298d.gif)
+
+**Figure 4‐6: Visa‐only brand**
+
+![Shape47](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Note:** Restrictions apply for merchants who are based outside of Skrill's standard region (USA and Europe). For details, see _ **Quick Checkout for out-of-region merchants on page 2-22** _.
+
+![Shape48](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+When the customer selects the _ **Credit/Debit Card** _ payment tab and enters their card number in the _ **Card number** _ field, the card type is automatically validated and the card logo is displayed, as shown in the example below.
+
+![Shape49](RackMultipart20230727-1-clbscd_html_5b9de2c9e019958b.gif)
+
+**Figure 4‐7: Card logo displayed next to the card number**
+
+**4.3.1.2.Straight Through Redirect**
+
+Straight Through Redirect is used with a single payment method code to automatically redirect customers to the Payment Method provider's website without showing the Quick Checkout payment form. Once redirected, the customer provides their name and any other details required and then confirms the payment. Straight Through Redirect reduces the number of steps to complete the payment.
+
+This option is only available if the following conditions apply:
+
+- Your merchant account is set to use Fixed payment methods
+- You pass a single payment method code in the _ **payment\_methods** _ parameter
+- You provide a customer email address using the pay\_from\_email parameter, firstname parameter and lastname parameter as per the requirements in Table 4-3 below. If any of the required parameters are not provided/missing, the Quick Checkout payment form will display to allow the customer to enter their email address, first name, last name. Quick Checkout payment form will display to allow the customer to enter their email address. The customer will then need to click **Proceed to \<Payment Method\>** to continue. For example: **Proceed to ALIPAY**.
+
+The following table lists the payment methods which support Straight Through Redirect:
+
+**Table 4‐3: Payment methods which support Straight Through Redirect**
+
+| **Payment Option** | **Payment\_methods** | **pay\_from\_email** | **firstname** | **lastname** |
+| --- | --- | --- | --- | --- |
+| AliPay | ALI | Y | N | N |
+| Boleto | BLT | Y | Y | Y |
+| SafetyPay cash payment | CHP | Y | Y | Y |
+| giropay | GIR | Y | N | N |
+| Trustly | GLU | Y | N | N |
+| Gift cards | GFC CVS DLG | Y | N | N |
+| Rapid Transfer | OBT | Y | Y | Y |
+| eps | NPY | Y | Y | Y |
+| NETELLER | NTL | N | N | N |
+| SafetyPay bank transfer | ONB | Y | Y | Y |
+| PagoEfectivo | PGF | Y | N | N |
+| paysafecard | PSC | Y | N | N |
+| Paysafecash | PCH | Y | N | N |
+| Przelewy24 | PWY | Y | N | N |
+| Gcash | GCH | Y | Y | Y |
+| GrabPay | GRP | Y | Y | Y |
+| Coins.ph | CNS | _Y_ | _Y_ | _Y_ |
+| Dana | DNA | _Y_ | _Y_ | _Y_ |
+| LinkAja eWallet | LNJ | _Y_ | _Y_ | _Y_ |
+| Mach | MAH | _Y_ | _Y_ | _Y_ |
+| Pix | SPX | _Y_ | _Y_ | _Y_ |
+| Khipu | KHP | _Y_ | _Y_ | _Y_ |
+| SPEI | SPI | Y | Y | Y |
+| Sofort (Klarna) | SFT | Y | N | N |
+| ePay | EPD | Y | N | N |
+
+#### 4.3.2.Flexible payment methods
+
+With the Flexible payment option, when you submit a payment method using the _ **payment\_methods** _ parameter, that method is preselected for the customer. All other payment methods enabled for your account and for the customers' country are shown in the other payment tabs. If the chosen payment method is not supported in the customer's country, the payment tabs show all other available payment methods for this country, listed by popularity. See the example below.
+
+\<input type="hidden" name="payment\_methods" value="OBT"\>
+
+![Shape50](RackMultipart20230727-1-clbscd_html_26050772eb167a33.gif)
+
+**Figure 4‐8: Flexible payment methods ‐ OBT preselected**
+
+### 4.4.Integrating Quick Checkout into your website
+
+These options enable you to customize the appearance of the Skrill Quick Checkout page, by either adding your own logo/brand or embedding the page in your website.
+
+#### 4.4.1.Displaying your company logo or brand
+
+You can display your company logo on Quick Checkout. To do this your payment request should include the _ **logo** _ parameter, with a secure HTTPS link to the logo on your website. See the example below.
+
+\<input type="hidden" name="logo" value="http[s://www.skrill.com/fileadmin/conte](http://www.skrill.com/fileadmin/content/)nt/ pdf/acme.png"\>
+
+![](RackMultipart20230727-1-clbscd_html_7731cba16f7f7446.jpg)
+
+**Figure 4‐9: Skrill Quick Checkout with merchant logo**
+
+#### 4.4.2.Recurring billing
+
+Skrill Quick Checkout enables merchants to receive recurring credit card and direct debit payments from customers without a Skrill Wallet registration.
+
+In addition to the standard HTML form parameters, you can supply the following parameters to set up recurring payments:
+
+**Table 4‐6: Recurring payment parameters**
+
+| **Field name** | **Description** | **Required** | **Max. length** | **Example value** |
+| --- | --- | --- | --- | --- |
+| rec\_amount | Amount of the recurring payment (to be taken at each recurring period) | Yes | 19 | 19.90 |
+
+| rec\_start\_date\* | Start date of the period in DD/ MM/YYYY format | No | 10 | 01/01/2018 |
+| --- | --- | --- | --- | --- |
+| rec\_end\_date | Final date of the period in DD/ MM/YYYY format | No | 10 | 31/03/2018 |
+
+**Table 4‐6: Recurring payment parameters (Continued)**
+
+| **Field name** | **Description** | **Required** | **Max. length** | **Example value** |
+| --- | --- | --- | --- | --- |
+| rec\_period | Number of rec\_cycles between payments | Yes | 6 | 14 (without a rec\_cycle defined this results in 14 days between payments) |
+| rec\_cycle | The time period e.g., day/month/ year. If this parameter is not submitted, Skrill assumes that the rec\_cycle is days. | No | 5 | day |
+| rec\_status\_url | URL to which Skrill notifies you that the recurring payment is canceled | No | 400 | http:// [www.example.com/](http://www.example.com/)rec\_pay\_cancelled.htm |
+| rec\_status\_url2 | Second URL to which Skrill notifies you that the recurring payment is canceled. | No | 400 | http:// [www.example.com/](http://www.example.com/)rec\_pay\_cancelled2.htm |
+
+![Shape51](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Note:** \* Future start dates are not allowed unless accompanied by a third-party deposit (_ **amount** _).
+
+![Shape52](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Example code**
+
+| \<input type="hidden" name="rec\_amount" value="19.90"\> |
+| --- |
+| \<input type="hidden" name="rec\_start\_date" value="01/02/2018"\> |
+| \<input type="hidden" name="rec\_end\_date" value="31/01/2020"\> \<input type="hidden" name="rec\_period" value="1"\> |
+| \<input type="hidden" name="rec\_cycle" value="month"\> |
+| \<input type="hidden" name="rec\_status\_url" [value="http://www.example.](http://www.example.com/)com/ rec\_pay\_cancel.htm"\> |
+| \<input type="hidden" name="rec\_status\_url2"[value="http://www.example](http://www.example.com/).com/ rec\_pay\_cancel2.htm"\> |
+
+**Supported recurring payment types**
+
+You can set up the following types of recurring payments:
+
+**Table 4‐7: Recurring payment types**
+
+| **Payment type** | **Description** | **Example** |
+| --- | --- | --- |
+| Pay third-party deposit | Normal third-party deposit is available | Pay now = $3.00 |
+| Third-party deposit + initial recurring now | Recurring payment starting now, accompanied by a third-party deposit | Pay now = $3.00 + Rec Pay ($2.00 every x days; start: today; end = ddmmyyy) |
+| Third-party deposit + initial recurring future | Recurring payment starting in the future, accompanied by a third-party deposit | Pay now = $3.00 + Rec Pay ($2.00 every x days; start: future; end = ddmmyyyy) |
+| No third-party deposit + initial recurring now | Recurring payment starting now, without a third-party deposit | Rec Pay ($2.00 every x days; start: today; end = ddmmyyyy) |
+
+**Payment methods used with recurring billing**
+
+A recurring billing payment can be set up with one of the following payment methods:
+
+- Credit/debit card (Visa and Mastercard)
+- Direct Debit
+
+**Recurring billing status**
+
+If a recurring billing has been set up and you have provided a _ **rec\_status\_url** _ in your HTML form, Skrill posts the transaction details of each payment to your _ **rec\_status\_url** _ page. The following table shows the parameters to be received on your page:
+
+**Table 4‐8: Recurring payment billing parameters**
+
+| **Field name** | **Description** | **Required** | **Example value** |
+| --- | --- | --- | --- |
+| merchant\_id | Unique ID of your Skrill account. ONLY needed for the calculation of the MD5 signature | Yes | 100005 |
+| transaction\_id | The reference or identification number you provided | Yes | A205220 |
+| status | Recurring payment status: 2 processed/ -2 failed | Yes | 2 |
+| rec\_payment\_id | Recurring payment ID | Yes | 200005 |
+| rec\_payment\_type | Type of payment: 'QCO' | Yes | recurring |
+| md5sig | MD5 signature | Yes | 327638C253A4637199CEBA6 642371F20 |
+| sha2sig | SHA2 signature | No | dbb7101322257a311f08d1c5 27053058fc7e464e30bcfb461 3f09053c22dd1f8 |
+| merchant\_fields | A comma-separated list of field names that are passed back to your status page when the payment is confirmed | No | Field1, Field2 |
+
+**Using the Merchant Query Interface**
+
+You can use the Merchant Query Interface to check the status, cancel, or extend the end date of a recurring payment. For details, see the[Automated](https://www.skrill.com/en/business/integration/)[Payments](https://www.skrill.com/en/business/integration/)[and](https://www.skrill.com/en/business/integration/)[Merchant](https://www.skrill.com/en/business/integration/)[Query](https://www.skrill.com/en/business/integration/)[Interfaces](https://www.skrill.com/en/business/integration/)[Guide](https://www.skrill.com/en/business/integration/)[.](https://www.skrill.com/en/business/integration/)
+
+![Shape53](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+# 5.ACCOUNT AND INTEGRATION OPTIONS
+
+![Shape54](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+You can use the following account and integration options:
+
+- _ **Secure return\_url parameter** _
+- _ **Merchant refunds** _
+- _ **Chargeback notification** _
+- _ **Adding a descriptor** _
+
+![Shape55](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Note:** _ **Code integration examples on page 5-3** _ describes how to generate a session identifier and redirect the customer to Skrill.
+
+![Shape56](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+### 5.1.Secure return\_url parameter
+
+A secure _ **return\_url** _ parameter allows you to be certain that the customer has arrived at your _ **return\_url** _ page by completing the payment process, rather than by looking up the _ **return\_url** _ value in the page source code and entering it into their browser. However, this function only guarantees that the customer has completed the payment process, _ **not** _ that the payment had been processed. If this feature is not activated, please contact Skrill Merchant Services. You must submit the following parameters with each transaction:
+
+- return\_url
+- transaction\_id
+- secret word (this will be automatically submitted if entered in the **Settings \> Developer Settings** section in your Skrill account).
+
+Skrill will then add the following parameters to the return\_url:
+
+###### Table 5‐1: Parameters returned with the return URL
+
+| **Parameter** | **Description** | **Example value** |
+| --- | --- | --- |
+| transaction\_id | The _ **transaction\_id** _ you submitted. | A205220 |
+| msid | The MD5 signature, with the following values: •merchant\_id, for example: 123456
+- transaction\_id, for example: A205220
+- upper-case MD5 value of the ASCII equivalent of your secret word, for example:
+F76538E261E8009140AF89E001341F17 | 730743ed4ef7ec631155f5e 15d2f4fa0 |
+
+The following are two examples of the secure _ **return\_url** _, using the values above.
+
+###### Example 1
+
+Merchant submits _ **return\_url** _ without additional parameters. For example: https://example.com/return\_url.cgi
+
+In this case Skrill will redirect the customer to:
+
+https://example.com/
+
+return\_url.cgi?transaction\_id=A205220&msid=730743ed4ef7ec631155f5e15d2f4fa0
+
+###### Example 2
+
+Merchant submits the _ **return\_url** _ with additional parameters. For example: https://example.com/return\_url.cgi?par1=val1&par2=val2 In this case Skrill will redirect the customer to:
+
+https://example.com/return\_url.cgi?par1=val1&par2=val2&transaction\_id=A205220&msid= 730743ed4ef7ec631155f5e15d2f4fa0
+
+### 5.2.Merchant refunds
+
+This option enables you to refund a payment to the customer's Skrill account, credit/debit card or bank account (depending on the original payment method used). If this feature is not activated, please contact merchantservices@skrill.com.
+
+![Shape57](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Note:** If your account is configured to allow refunds, you will have an additional action link in the transaction history next to each entry that will trigger a refund to the customer.
+
+![Shape58](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+You can also make refunds through Skrill's Automated Payments Interface (API). For details, see the _ **Automated Payments and Merchant Query Interfaces Guide** _.
+
+### 5.3.Chargeback notification
+
+When Skrill receives a chargeback request from the provider, a chargeback notification is sent to your _ **status\_url** _ page and an email is sent to the primary email address linked to your merchant Skrill account. The status code sent to the _ **status\_url** _ page is _ **-3** _. (For a description of transaction status values, see _ **Transaction status on page 2-19** _.)
+
+### 5.4.Adding a descriptor
+
+When a customer pays through Skrill, Skrill submits a descriptor with the transaction, containing your business trading/brand name. The descriptor is typically displayed on the bank or credit card statement of the customer. If you want to change this descriptor, please contact merchantservices@skrill.com. This functionality is only available for the following payment methods:
+
+- Visa
+- Mastercard
+- Klarna
+- Direct Debit
+- iDEAL
+
+![Shape59](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Note:** This feature is not available for cards from out-of-region banks.
+
+![Shape60](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+For Klarna and Direct Debit, you can also submit an additional payment form parameter, _ **dynamic\_descriptor** _, which will override the default value stored by Skrill.
+
+### 5.5.Code integration examples
+
+You can use the examples below to generate your session ID from Skrill, which is the recommended method for connecting to Quick Checkout, as described in _ **Secure redirection method on page 2-4** _.
+
+#### 5.5.1.Generating the Session Identifier
+
+Below are examples of how to generate a SID using different programming methods.
+
+**cURL**
+
+| curl -X POST https://pay.skrill.com |
+| --- |
+| -d "pay\_to\_email=merchant\_email@mail.com" -d "amount=10.99" |
+| -d "currency=EUR" |
+| -d "language=EN" -d "prepare\_only=1" |
+
+**Ruby**
+
+| require 'net/http' |
+| --- |
+| require 'net/https' |
+| require 'uri' |
+| uri = URI('https://pay.skrill.com') |
+| http = Net::HTTP.new(uri.host, uri.port) http.use\_ssl = true |
+| req = Net::HTTP::Post.new(uri.path) |
+| req.set\_form\_data({ 'pay\_to\_email'=\>'merchant\_email@mail.com', |
+| 'amount'=\>'10.99', |
+| 'currency'=\>'EUR', 'language'=\>'EN', |
+| 'prepare\_only'=\>'1' |
+| }) |
+| res = http.request(req) |
+| puts res.body |
+
+#### 5.5.2.Redirecting the customer to Skrill
+
+Once you have the session identifier (SID), you have to redirect the customer to Skrill, and include the session identifier. https://pay.skrill.com?/sid=\<generated\_sid\>
+
+Where _ **\<generated\_sid\>** _ is the SID returned by Skrill. You can open the URL with the SID as a Lightbox.
+
+\* Not available for US and Canada merchants
+
+![Shape61](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+# 6.SKRILL 1‐TAP PAYMENT
+
+![Shape62](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+Skrill offers a single-click payment service which enables you to automatically debit transactions from your customer's Skrill account without the customer having to authorise the payment each time. Customers are sent an email notification after each 1-Tap payment and they can view the status of all their Skrill 1-Tap payments in the History section of their Skrill Wallet account.
+
+Customers can pay using Skrill 1-Tap with any of the following payment methods linked to their Skrill account:
+
+- Credit/debit card (Visa and Mastercard)
+- Direct Debit
+
+  1. **Enabling 1‐Tap**
+
+To enable this service, contact Skrill Merchant Services.
+
+![Shape63](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Note:** You must set up a separate merchant account for taking Skrill 1-Tap payments.
+
+![Shape64](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+  1. **Enable the MQI and API**
+
+You will need to enable the MQI (merchant query interface) and API (automated payment interface) and set up an MQI/API password to use 1-Tap. You can also change the MQI/API password here in this section.
+
+To enable the MQI and/or API:
+
+1. Log in to your Skrill account at[www.skrill.com](http://www.skrill.com/)[.](http://www.skrill.com/)
+2. Go to **Settings \> Developer Settings**  **\> API / MQI / GSR / CVT Management**.
+3. Set the API / MQI Password, and click **Save** to confirm.
+4. Specify at least one IP address from which requests will be made. All requests from other IP addresses are denied. Access can be granted to:
+  - A single IP address (e.g. 192.168.0.2)
+  - Multiple IP addresses, separated by a space (e.g. 192.168.0.2 10.0.0.2)
+  - A subnet in CIDR notation (e.g. 175.10.10.252/30).
+
+![Shape65](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Warning:** CIDR ranges should be no longer than 256 IP addresses.
+
+![Shape66](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+![Shape67](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Note:** If the **Settings \> Developer Settings** section is not displayed in your account, contact SkrillMerchant Services.
+
+![Shape68](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+1. To apply your changes, click **Save**.
+
+![Shape69](RackMultipart20230727-1-clbscd_html_3b68cdd27c9a9073.gif)
+
+**Figure 6‐1: Enable the API and MQI and set up a password and IP range for these services** You must use a separate password for API or MQI requests. This ensures that the password you use to access your Skrill Digital Wallet account can be changed without affecting the API or MQI.
+
+![Shape70](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Note:** The password must be at least 8 characters long and must contain at least one alphabetic and one non-alphabetic character.
+
+![Shape71](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+The MQI is used for the following functions:
+
+- Repost transaction status information for payment transactions (Wallet Checkout, Quick Checkout, and 1-Tap subsequent payments)
+- View transaction status (payment and send money transactions)
+- View account history
+- Cancel a recurring payment
+- View the status of a recurring payment
+- Extend the end date of a recurring payment
+- Cancel a 1-Tap payment
+- View the status of a 1-Tap payment The API is used for the following functions:
+- Refund Quick Checkout, Wallet Checkout, or 1-Tap payments ( **Note:** This functionality is not available for Gambling and FOREX Merchants)
+- Transfer money to another Skrill Account
+- Take subsequent 1-Tap payments after the initial setup payment
+
+  1. **Skrill 1‐Tap button**
+
+The Skrill 1-Tap button must be displayed on your website when setting up Skrill 1-Tap mandates and with any subsequent transactions performed through Skrill 1-Tap.
+
+![](RackMultipart20230727-1-clbscd_html_e8105f6d94a6af71.jpg)
+
+**Figure 6‐2: Skrill 1‐Tap button**
+
+This button is available in different sizes. For details, see:
+
+[https://www.skrill.com/en/business/merchants/brand](https://www.skrill.com/en/business/merchants/brand-centre)[-](https://www.skrill.com/en/business/merchants/brand-centre)[centre](https://www.skrill.com/en/business/merchants/brand-centre)
+
+  1. **Call flows**
+
+###### Initial payment request
+
+The following figure provides an overview of the 1-Tap payment setup process.
+
+![Shape72](RackMultipart20230727-1-clbscd_html_43a3cd102855b23c.gif)
+
+**Figure 6‐3: Initial Skrill 1‐Tap payment flow**
+
+1. When the customer is ready to pay for goods or services on your website, they select the payment button on your website.
+2. You request a session identifier (SID) by passing customer and transaction details (e.g., amount, currency, and language) to the Skrill Quick Checkout. You also include the required 1-Tap parameters.
+3. Skrill returns the generated SID.
+4. Using a Lightbox, redirect the customer to the Skrill Quick Checkout and include the session identifier in the redirect URL. Skrill displays the payment page.
+5. The customer pays using the preferred payment method and confirms the transaction.
+6. Skrill requests authorisation for the payment from the customer's bank, third party provider, or card issuer.
+7. The bank/provider approves or rejects the transaction.
+8. Skrill displays the confirmation page, containing the transaction result, on the Skrill Quick Checkout.
+9. Skrill provides you with an asynchronous notification, sent to your status URL or IPN (instant Payment Notification), confirming the transaction details and status. These details include the _ **rec\_payment\_id** _ of the 1-Tap payment, which can be used for future 1-Tap debits from the customer's account.
+
+\* Not available for US and Canada merchants
+
+![Shape73](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Note:** You should keep track of the status of 1-Tap payment and update your records if notified of a status change at the _ **ondemand\_status\_url** _ you submitted for the 1-Tap payment.
+
+![Shape74](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+###### Subsequent payments
+
+The following figure provides an overview of the 1-Tap payment process after the initial setup is complete.
+
+![Shape75](RackMultipart20230727-1-clbscd_html_951eb4ffcaf9baf3.gif)
+
+1. The customer clicks the **Skrill 1‐Tap** button.
+2. The merchant checks the status of the 1-Tap mandate using their records or the Merchant Query Interface (MQI).
+3. If the customer is already set up for 1-Tap, the merchant makes the prepare request. Both _ **frn\_trn\_id** _ and _ **rec\_payment\_id** _ should be provided.
+
+![Shape76](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Note:** If the customer is not set up for 1-Tap, then the merchant makes a normal Quick Checkout payment request and optionally submits 1-Tap payment details to set up the 1-Tap service, as described previously in _ **Initial Skrill 1-Tap payment flow on page 6-3** _.
+
+![Shape77](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+1. The Skrill 1-Tap Payment Interface returns the session identifier (SID).
+2. The merchant sends the execution request with the returned SID.
+3. The Skrill 1-Tap Payment Interface validates the request.
+4. Skrill requests authorisation for the payment from the customer's bank, third party provider, or card issuer (if required).
+5. The bank/provider approves or rejects the transaction.
+6. The Skrill 1-Tap Payment interface sends a response with the transaction status.
+7. The transaction status notification is also posted to the merchant's status URL.
+8. The merchant notifies the customer of the status of the 1-Tap payment.
+
+**6.5.**** Setting up an initial 1‐Tap payment**
+
+In addition to the standard parameters described in _ **Skrill Quick Checkout parameters on page 2-5** _, you can supply the following parameters to set up a Skrill 1-Tap payment via the Skrill Wallet Checkout:
+
+###### Table 6‐1: Skrill 1‐Tap parameters
+
+| **Field name** | **Description** | **Required** | **Max**  **length** | **Example value** |
+| --- | --- | --- | --- | --- |
+| ondemand\_max\_amount | Maximum amount for future payments that will be debited from the customer's account | Yes | 9 | 11.50 |
+| ondemand\_max\_currency | 3-letter code of the currency of the maximum amount according to ISO 4217 (see ISO 4217 currencies on page 8-1) | Yes/No | 3 | EUR |
+| ondemand\_note | Text shown to the customer in the payment confirmation email as the reason for the Skrill 1-Tap payment. | Yes | 1000 | credit topped up |
+| ondemand\_status\_url | URL to which Skrill notifies you that the Skrill 1-Tap payment is cancelled. This URL is restricted to the same ports as the status\_url | No | 400 | http:// [www.example.com/](http://www.example.com/)od\_payment\_cancel led.htm |
+| ondemand\_status\_url2 | URL to which Skrill notifies you that the Skrill 1-Tap payment is cancelled. This URL is restricted to the same ports as the status\_url | No | 400 | http:// [www.example.com/](http://www.example.com/)od\_payment\_cancel led2.htm |
+
+**Notes:**
+
+- If '_ **ondemand\_max\_currency** _' is not provided, the currency value will be the one provided as the 'currency' in the standard HTML form (see _ **Skrill Quick Checkout parameters on page 2-5** _).
+- A session identifier (SID) parameter is returned upon success.
+- The Skrill response includes a _ **rec\_payment\_id** _. You should store the _ **rec\_payment\_id** _ field so that you can reference the original 1-Tap transaction.
+- You can track the status of any 1-Tap transaction and perform refunds using your own unique _ **transaction\_id** _ for that transaction.
+
+###### 6.5.1.Example of a Skrill 1‐Tap payment form
+
+See the example below. The included 1-Tap payment fields are highlighted.
+
+| \<form action="https://pay.skrill.com" method="post" target="\_blank"\> \<input type="hidden" name="pay\_to\_email" value="demowallet@sun-fish.com"\> |
+| --- |
+| \<input type="hidden" name="status\_url" value="http[s://www.example.com/status](http://www.example.com/status)"\> |
+| \<input type="hidden" name="language" value="EN"\> \<input type="hidden" name="amount" value="39.60"\> |
+| \<input type="hidden" name="currency" value="GBP"\> |
+| \<input type="hidden" name="detail1\_description" value="Description:"\> |
+| \<input type="hidden" name="detail1\_text" value="Romeo and Juliet"\> \<input type="hidden" name="recipient\_description" value="ACME Solutions"\> |
+| \<input type="hidden" name="ondemand\_max\_amount" value="150.00"\> |
+| \<input type="hidden" name="ondemand\_max\_currency" value="EUR"\> \<input type="hidden" name="ondemand\_note" value="Your 1-Tap Payment"\> |
+| \<input type="hidden" name="ondemand\_status\_url" |
+| value[="www.example.com/ondemandstatus1](http://www.example.com/ondemandstatus1)["](http://www.example.com/ondemandstatus1)\> \<input type="hidden" name="ondemand\_status\_url2" |
+| value[="www.example.com/ondemandstatus2](http://www.example.com/ondemandstatus2)["](http://www.example.com/ondemandstatus2)\> |
+| \<input type="submit" value="Pay!"\> \</form\> |
+
+**6.6.**** Taking subsequent 1‐Tap payments**
+
+Once a Skrill 1-Tap payment has been set up, you must use the Skrill 1-Tap Payment Interface (part of Skrill's Automated Payment Interface) to make individual requests to debit the customer's Skrill account. If you have provided a _ **status\_url** _ value in your HTML form, Skrill will post the transaction details of each payment to that URL.
+
+###### Connecting to the 1‐Tap interface
+
+You can connect to the Skrill 1-Tap interface by sending HTTPS GET/POST requests to: [https://www.skrill.com/ap](http://www.skrill.com/app/ondemand_request.pl)p/onde[mand\_request.pl](http://www.skrill.com/app/ondemand_request.pl) **Notes:**
+
+- You must enable the Skrill Automated Payment Interface (API) and setup an MQI/API password
+- Skrill recommend using POST for maximum security.
+- Do not mix GET and POST requests. Choose which method to use and apply consistently.
+- POST parameters are encoded using Content-Type: application/x-www-form-urlencoded
+- GET parameters are encoded in the URI query string using & delimiters (e.g. GET parameters are sent as part of the URL query string[https://www.skrill.com/](http://www.skrill.com/app/query.pl?action=status)app/que[ry.pl?action=status](http://www.skrill.com/app/query.pl?action=status)\_trn&email=mb654@abv.bg&password=53903d217504eb37f3fdb0ce77610558&mb\_trn\_id
+
+=104627261)
+
+Taking subsequent 1-Tap Payments is a two-step process:
+
+1. Send a first request with action set to prepare to receive a session ID for step 2
+2. Send a second request with action set to request using the session ID from step 1 to execute the payment.
+
+These steps are described in more detail below.
+
+###### 6.6.1.Prepare payment step
+
+Action parameter: **action=prepare**
+
+This action prepares the transaction that will be executed later using the request action. The following parameters are required:
+
+**Table 6‐2: Parameters to include with the prepare request**
+
+| **Field name** | **Description** | **Required** | **Example value** |
+| --- | --- | --- | --- |
+| email | The email address linked to your Skrill account | Yes | info@example.com |
+| password | The lowercase hex MD5 of your API/MQI password | Yes | 9f535b6ae672f627e 4e5f79f2b7c63fe |
+| action | The required action | Yes | prepare |
+| amount | The amount of the request for a debit transaction | Yes | 10.50 |
+| currency | 3-letter code of the currency you wish to debit according to ISO 4217 | Yes | EUR |
+| ondemand\_note | Text shown to the customer in the payment confirmation email as the reason for the Skrill 1-Tap payment | No | Credit topped up |
+| frn\_trn\_id | Your transaction ID, used for the payment. This is your own unique reference for this transaction | Yes | A205220 |
+| rec\_payment\_id | Recurring payment ID (_ **rec\_payment\_id** _ value) sent to your _ **status\_url** _ page when you created the Skrill 1-Tap payment | Yes | 200005 |
+| merchant\_fields | A comma-separated list of field names that are passed back to your Web server when the Skrill 1-Tap payment is confirmed (maximum 5 fields) | No | Field1, Field2 |
+| Field1 | An additional field you can include, containing your own unique parameters. | No | Value1 |
+| Field2 | An additional field you can include, containing your own unique parameters. | No | Value2 |
+
+**Notes:**
+
+- Both _ **frn\_trn\_id** _ and _ **rec\_payment\_id** _ should be provided. You should use the r_ **ec\_payment\_id** _ field to reference the original 1-Tap transaction and provide a unique _ **frn\_trn\_id** _ as the reference for the current transaction.
+- If _ **ondemand\_note** _ is not provided, the one that is submitted when creating the Skrill 1-Tap payment will be used.
+- A session identifier (SID) parameter is returned upon success.
+
+You can track the status of any 1-Tap transaction and perform refunds using the unique _ **frn\_trn\_id** _ for that transaction.
+
+**Skrill response**
+
+Skrill returns an XML response to your prepare request which contains a \<response\> tag with one of the following elements:
+
+- **sid** element - returned if the authorisation and payment preparation is successful. The SID (session identifier) must be submitted in your transfer execution request.
+- **error** element - included if an error occurs. It includes an \<error\_msg\> tag, which contains the error message description.
+
+**Example 1: Successful prepare request**
+
+Below is an example of a successful prepare request.
+
+**Request**
+
+POST[https://www.skrill.com/app/ondemand\_request.pl](http://www.skrill.com/app/ondemand_request.pl)
+
+**Header**
+
+Content-Type: application/x-www-form-urlencoded
+
+**Body**
+
+email=sample.merchant%40sun- fish.com&password=fb0dc09bd0989fe975afd3e4ddabb926&action=prepare&amount=1.23&curre ncy=EUR&ondemand\_note=ondemand+note&frn\_trn\_id=12341990&rec\_payment\_id=1668618647
+
+**Response**
+
+| \<?xml version="1.0" encoding="UTF-8"?\> \<response\> \<sid\>4414c2a969c744c27bd674a0b0a5ba8a\</sid\> |
+| --- |
+
+\</response\>
+
+**Example 2: Failed prepare request**
+
+This example shows a request that failed, due to an invalid merchant email.
+
+**Request**
+
+POST[https://www.skrill.com/app/ondemand\_request.pl](http://www.skrill.com/app/ondemand_request.pl)
+
+**Header**
+
+Content-Type: application/x-www-form-urlencoded
+
+**Body**
+
+email=&password=fb0dc09bd0989fe975afd3e4ddabb926&action=prepare&amount=1.23&currenc y=EUR&ondemand\_note=ondemand+note&frn\_trn\_id=12341990&rec\_payment\_id=1668618647
+
+**Response**
+
+| \<?xml version="1.0" encoding="UTF-8"?\> |
+| --- |
+| \<response\> \<error\> |
+| \<error\_msg\>LOGIN\_INVALID\</error\_msg\> |
+| \</error\> \</response\> |
+
+**Table 6‐3: General errors**
+
+| **Error** | **Description** |
+| --- | --- |
+| SESSION\_EXPIRED | The session has expired. Session IDs are only valid for 15 minutes. |
+
+**Table 6‐4: Errors when making Skrill 1‐Tap payment requests**
+
+| **Error** | **Description** |
+| --- | --- |
+| CUSTOMER\_IS\_LOCKED | The customer's account is locked for outgoing payments |
+| BALANCE\_NOT\_ENOUGH | The customer's account balance is insufficient |
+| RECIPIENT\_LIMIT\_EXCEEDED | The customer's account limits are insufficient |
+| CARD\_FAILED | The customer's credit or debit card failed |
+| REQUEST\_FAILED | A generic response for the transaction failing for any other reason |
+| ONDEMAND\_CANCELLED | The customer has cancelled this Skrill 1-Tap payment |
+
+**Table 6‐4: Errors when making Skrill 1‐Tap payment requests (Continued)**
+
+| **Error** | **Description** |
+| --- | --- |
+| ONDEMAND\_INVALID | The Skrill 1-Tap payment requested does not exist |
+| MAX\_REQ\_REACHED | Too many failed Skrill 1-Tap payment requests to the API. For security reasons, only two failed attempts per user per 24 hours are allowed |
+| MAX\_AMOUNT\_REACHED | The payment amount is greater than the maximum amount configured when 1-Tap payments were set up for this user. |
+
+**Table 6‐5: Errors when validating parameters**
+
+| **Error** | **Description** |
+| --- | --- |
+| INVALID\_OR\_MISSING\_ACTION | Wrong action or no action is provided |
+| LOGIN\_INVALID | Email address and/or password were not provided |
+| INVALID\_REC\_PAYMENT\_ID | Invalid recurring payment ID is submitted by the merchant |
+| MISSING\_EMAIL | Provide registered email address of merchant account |
+| MISSING\_PASSWORD | Provide correct API/MQI password |
+| MISSING\_AMOUNT | Provide amount you wish to send |
+| MISSING\_CURRENCY | Provide currency you wish to send |
+| MISSING\_BNF\_EMAIL | Provide email address of the beneficiary |
+| MISSING\_SUBJECT | Provide subject of the payment |
+
+**Table 6‐5: Errors when validating parameters (Continued)**
+
+| **Error** | **Description** |
+| --- | --- |
+| MISSING\_NOTE | Provide notes for the payment |
+
+###### 6.6.2.Execute payment step
+
+Action parameter: **action=request**
+
+Now that you have received a session ID you can execute the actual payment transaction using the request action. The URL is the same as before. The following parameters are required:
+
+**Table 6‐6: Parameters to include with the request**
+
+| **Field name** | **Description** | **Required** | **Example value** |
+| --- | --- | --- | --- |
+| sid | Session identifier returned in response to the prepare request. | Yes | 7783bfa23641a627 e4a5f79f2b7c6 |
+| action | The required action (i.e., prepare). | Yes | request |
+
+Upon success, Skrill returns the details of the transaction as an XML response. This response contains the following fields:
+
+**Table 6‐7: Fields provided in the XML response**
+
+| **Field name** | **Description** | **Example value** |
+| --- | --- | --- |
+| amount | Amount requested | 10.50 |
+| currency | 3-letter currency code of the amount, according to ISO 4217 | EUR |
+| id | Transaction ID | 500123 |
+| status | Skrill 1-Tap payment status: 2 – processed -2 – failed | 2 |
+| status\_msg | Text description of the status. | processed |
+
+**Notes:**
+
+- If a request fails, you are not allowed to make more than two requests for a debit of a customer's account using a Skrill 1-Tap payment per customer per 24 hours.
+- The customer is notified via email for every Skrill 1-Tap payment request executed.
+
+**Example 1: Successful request**
+
+Below is an example of a successful request.
+
+**Request**
+
+POST[https://www.skrill.com/app/ondemand\_request.pl](http://www.skrill.com/app/ondemand_request.pl)
+
+**Header**
+
+Content-Type: application/x-www-form-urlencoded
+
+**Body**
+
+sid=84034fe3e5c9f6ef54e51efbbe9f2767&action=request
+
+**Response**
+
+| \<?xml version="1.0" encoding="UTF-8"?\> |
+| --- |
+| \<response\> \<transaction\> |
+| \<amount\>10.34\</amount\> |
+| \<currency\>EUR\</currency\> \<id\>1668624876\</id\> |
+| \<status\>2\</status\> |
+| \<status\_msg\>processed\</status\_msg\> \</transaction\> |
+| \</response\> |
+
+**Example 2: Failed request**
+
+This example shows a request that failed, due to an expired session ID.
+
+**Request**
+
+POST[https://www.skrill.com/app/ondemand\_request.pl](http://www.skrill.com/app/ondemand_request.pl)
+
+**Header**
+
+Content-Type: application/x-www-form-urlencoded
+
+**Body**
+
+sid=123&action=request
+
+**Response**
+
+| \<?xml version="1.0" encoding="UTF-8" ?\> |
+| --- |
+| \<response\> |
+| \<error\> \<error\_msg\>SESSION\_EXPIRED\</error\_msg\> |
+| \</error\> |
+| \</response\> |
+
+**6.7.**** Checking or cancelling 1‐Tap payments**
+
+You can use the Merchant Query Interface (MQI) to review the status of a 1-Tap payment or to cancel it so that no more 1-Tap payments can be taken.
+
+You can access the MQI by posting an HTTPS GET/POST query to:[https://www.skrill.com/app/query.pl](http://www.skrill.com/app/query.pl)The MQI requires three general parameters to be included in your query (email, password, and action) and a number of parameters specific to the requested action (see the Additional Parameters table for each action below)
+
+###### Table 6‐8: General parameters
+
+| **Field name** | **Description** | **Required** | **Example value** |
+| --- | --- | --- | --- |
+| email | The email address linked to your Skrill account | Yes | info@example.com |
+| password | The lowercase hex MD5 of your API/MQI password | Yes | 9f535b6ae672f627e 4e5f79f2b7c63fe |
+| action | The required action (i.e., prepare). | Yes | request |
+| amount | The amount of the request for a debit transaction | Yes | 10.50 |
+
+###### 6.7.1.Cancel Skrill 1‐Tap payment
+
+Action parameter: **action=cancel\_od**
+
+This action allows you to cancel a Skrill 1-Tap payment. The following additional parameter is required:
+
+**Table 6‐9: Additional parameters ‐ Cancel a 1‐Tap payment**
+
+| **Field name** | **Description** | **Required** | **Example value** |
+| --- | --- | --- | --- |
+| trn\_id | Your transaction ID. This is the _ **transaction\_id** _ value you provided for the initial setup 1-Tap payment. If you did not provide a _ **transaction\_id** _ parameter this will be the t_ **ransaction\_id** _ parameter returned to your _ **status\_url** _ page once the initial setup 1-Tap payment is complete | Yes | 500123 |
+
+**Request**
+
+POST[https://www.skrill.com/app/query.pl](http://www.skrill.com/app/query.pl)
+
+**Header**
+
+Content-Type: application/x-www-form-urlencoded
+
+**Body**
+
+action=cancel\_od&email=info@example.com&password=9f535b6ae672f627e4a5f79f2b7c63fe&t rn\_id=500123
+
+**Response**
+
+| 200 → | → | OK |
+| --- | --- | --- |
+
+Where an arrow symbolises a tab character.
+
+Using escape sequences to represent special characters:
+
+200\t\tOK\n\n
+
+###### 6.7.2.Get Skrill 1‐Tap payment status
+
+Action parameter: **action=status\_od**
+
+This action allows you to cancel a Skrill 1-Tap payment. The following additional parameter is required:
+
+**Table 6‐10: Additional parameters ‐ Check 1‐Tap payment status**
+
+| **Field name** | **Description** | **Required** | **Example value** |
+| --- | --- | --- | --- |
+| trn\_id | Your transaction ID. This is the _ **transaction\_id** _ value you provided for the initial setup 1-Tap payment. If you did not provide a _ **transaction\_id** _ parameter this will be the _ **transaction\_id** _ parameter returned to your _ **status\_url** _ page once the initial setup 1-Tap payment is complete | Yes | 500123 |
+
+If a transaction with the supplied ID is found, the response will contain the following parameters on the second line of the response:
+
+- Status: 0 – active; -1 – cancelled
+- Last execution date in dd-mm-yyyy format or '--' if no subsequent payments have been taken (payments after the initial setup)
+
+**Example 1: Check status of a cancelled 1‐Tap payment**
+
+**Request**
+
+POS[T https://www.skrill.com/app/query.pl](http://www.skrill.com/app/query.pl)
+
+**Header**
+
+Content-Type: application/x-www-form-urlencoded
+
+**Body**
+
+action=status\_od&email=info@example.com&password=9f535b6ae672f627e4a5f79f2b7c63fe&t rn\_id=500123
+
+**Response**
+
+200 → → OK
+
+Status: -1 Last execution date: 08-01-2017
+
+![Shape78](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Note:** The arrows above represent tab characters. There are two spaces between the _ **Status** _ value and the word _ **Last** _.
+
+![Shape79](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+Using escape sequences to represent special characters: 200\t\tOK\nStatus: -1 Last execution date: 08-01-2017\n
+
+![Shape80](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Note:** The arrows above represent tab characters. There are two spaces between the _ **Status** _ value and the word _ **Last** _.
+
+![Shape81](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Example 2: Check status of an active 1‐Tap payment with invalid transaction**
+
+**Request**
+
+POS[T https://www.skrill.com/app/query.pl](http://www.skrill.com/app/query.pl)
+
+**Header**
+
+Content-Type: application/x-www-form-urlencoded
+
+**Body**
+
+action=status\_od&email=info@example.com&password=9f535b6ae672f627e4a5f79f2b7c63fe&t rn\_id=123
+
+**Response**
+
+| 403 → | → | Transaction not found: 123 |
+| --- | --- | --- |
+
+Using escape sequences to represent special characters: 403\t\tTransaction not found: 123\n
+
+![Shape82](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Note:** The above response still returns a 200 HTTP response status code
+
+![Shape83](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+###### 6.7.3.MQI Error Messages
+
+The following error messages can be returned by the Merchant Query Interface (MQI):
+
+**Table 6‐11: MQI error messages**
+
+| **Error** | **Description** | **Reason for error** |
+| --- | --- | --- |
+| 401 | Unauthorised/ Cannot log in | Authentication is required and has failed or has not yet been provided. |
+| 402 | Payment Required | Reserved for future use. |
+| 403 | Forbidden | The request was a valid request, but the server is refusing to respond to it. For example, the provided credentials were successfully authenticated but do not grant the client permission to access the resource. |
+| 404 | Not Found | The requested resource could not be found. |
+| 405 | Method not Allowed | A request was made of a resource using a request method not supported. For example, using GET on a method which requires data to be presented via POST. |
+
+![Shape84](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+##### 7.ASTROPAY
+
+![Shape85](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+This section explains the Skrill payment flow for the Astropay payment method available in Argentina, and India. Astropay is composed of two subcategories:
+
+- Bank Transfer (two transfer types are available: Direct or Manual)
+- Cash/Invoice
+
+![Shape86](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Note:** Astropay is only available for payments greater than or equal to 10 USD. Contact SkrillMerchant Servicesto enable each of the different Astropay payment methods listed above.
+
+![Shape87](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+These categories are described in more detail below. Not all categories are supported in all the countries where Astropay is available, see _ **List of banks supported by country on page 7-14** _ for a list of all the banks or cash payment networks that Astropay supports in each country and which payment category they support. If a country is not listed, it does not support Astropay.
+
+Astropay integration is the same as the standard Skrill integration, however, the merchant's integration code must handle interim pending payment status notifications and be prepared to receive the final payment success notification some days, weeks, or months later (in the case of cash/ invoice payment).
+
+The Skrill Quick Checkout payment form can show two Astropay tabs: Cash and Bank Transfer. The Bank Transfer tab is used for both Direct and Manual bank transfers. You can restrict which tabs are shown by using the Fixed Split Gateway option and the payment method codes listed in _ **Astropay payment method codes on page 7-14** _.
+
+When a customer selects the appropriate tab they will see the logos of all supported banks (or in the case of Cash, supported payment networks) and a drop-down menu where they can select the bank or payment network they wish to use. If only one bank or payment network is supported in the customer's country, this logo will appear instead of Cash or Bank Transfer to increase conversion. If the merchant passes a payment method code, they can restrict the Bank Transfer page to only show Direct or Manual banks in the drop-down menu on the Bank Transfer tab, as appropriate.
+
+Finally, this section includes a description of the refund process which differs from the standard refund process as user action is required.
+
+**7.1.**  **Bank transfer**
+
+###### Direct bank transfer
+
+Direct bank transfer is the simplest method for customers. The payment flow is as follows:
+
+1. The customer clicks **Pay by Bank Transfer** on the merchant website and is redirected to the Skrill Quick Checkout payment form.
+2. The customer enters their first and last name (if these are not supplied by the merchant).
+3. The customer enters their National Identity number (this field has a different name depending on the country, e.g., CPF, RUT, ID, DNI).
+4. The customer selects a local bank in the Skrill payment form and clicks **Proceed to Online Bank**. The list of available banks depends on the country selected. If the bank supports Direct Bank Transfer the payment flow continues, otherwise, the flow will be as described in _ **Manual bank transfer** _ below.
+5. The customer is redirected to the chosen bank's website where they can log in and approve a bank transfer to make payment.
+6. Once payment is complete, Skrill shows a successful payment form and sends a response containing the payment status to the merchant's _ **status\_url** _.
+7. The customer clicks the button on the success form to return to the merchant website. The merchant website should check the payment status received at the _ **status\_url** _ for the payment to determine the message to show to the customer.
+8. When the merchant receives a valid payment confirmation with a status value of 2 at the merchant's _ **status\_url** _ they can release the goods to the customer.
+
+![Shape88](RackMultipart20230727-1-clbscd_html_446d3aba18bb0c1c.gif)
+
+**Figure 7‐1: Enter the name and ID number and select a bank**
+
+![](RackMultipart20230727-1-clbscd_html_4ec503706abdbccd.jpg)
+
+**Figure 7‐2: Select business or personal bank account**
+
+![](RackMultipart20230727-1-clbscd_html_66af6b04112c74bd.jpg)
+
+**Figure 7‐3: Log in to the bank to make a transfer**
+
+![](RackMultipart20230727-1-clbscd_html_e71fd865e164d59c.jpg)
+
+**Figure 7‐4: Re‐enter your password**
+
+![](RackMultipart20230727-1-clbscd_html_dea2dc30cc116da0.jpg)
+
+**Figure 7‐5: Review payment details and confirm payment**
+
+![](RackMultipart20230727-1-clbscd_html_58f7345e5d19ea6e.jpg)
+
+**Figure 7‐6: Successful payment**
+
+###### Manual bank transfer
+
+The manual bank transfer payment flow is as follows:
+
+1. The customer clicks **Pay by Bank Transfer** on the merchant website and is redirected to the Skrill Quick Checkout payment form.
+2. The customer selects a local bank from a drop-down menu in the payment form (the list of available banks depends on the country selected). If the bank supports Manual Bank Transfer the payment flow continues, otherwise, the flow will be as described in _ **Direct Bank Transfer** _ above.
+3. The customer clicks **Proceed to Online Bank**. A form is displayed showing the manual bank transfer details required to complete the payment. Note that the amount will always be displayed in the local currency in that country rather than the currency selected in the merchant website. The transfer details will always be displayed in the local language.
+4. The customer clicks on **Do Transfer** (Realizar Transferencia in Spanish) to be redirected to the selected bank's website where they can manually complete the payment.
+5. Once the transfer is complete, the customer clicks **Already Deposited** (Ya Desposité in Spanish) in the Skrill payment form and a pending notice is shown on the Skrill payment form. This informs customer that payment is pending.
+6. The customer can now click the **Continue** button to return to the merchant website. The merchant website should check the payment status received at the _ **status\_url** _ for the payment to determine the message to show to the customer.
+7. Once payment is complete, Skrill receives confirmation and sends a payment success notification to the merchant's _ **status\_url** _. Note that this may take 1-2 days after the customer
+
+**\* Not available for US and Canada merchants**
+
+has made the bank transfer. When the merchant receives a valid payment confirmation with a status value of 2 at their _ **status\_url** _ they can release the goods to the customer.
+
+![](RackMultipart20230727-1-clbscd_html_369d91fdd4afb531.jpg)
+
+**Figure 7‐7: Enter a name and ID and select a bank**
+
+![](RackMultipart20230727-1-clbscd_html_8540722fb9b9cb8d.jpg)
+
+**Figure 7‐8: Bank account details for manual transfer**
+
+![](RackMultipart20230727-1-clbscd_html_b435a5c4cae8ef16.jpg)
+
+**Figure 7‐9: Log in to bank to make a manual transfer (not shown)**
+
+![](RackMultipart20230727-1-clbscd_html_7114a8b1f0d26bc8.jpg)
+
+**Figure 7‐10: Pending payment shown after clicking Already Paid**
+
+**7.2.**** Cash/Invoice**
+
+The cash payment flow is as follows:
+
+1. The customer clicks **Pay by Cash/ Invoice** on the merchant website. They are then redirected to the Skrill Quick Checkout Payment form.
+2. The customer selects a local bank/payment network from the drop-down menu (the list of available banks depends on the country selected).
+3. The customer enters their first and last name (if these are not supplied by the merchant).
+4. The customer enters their National Identity number (This field has a different name depending on the country, for example: CPF, RUT, ID, DNI, etc.)
+5. The customer is redirected to the bank/payment network website for confirmation.
+6. The bank/payment network website displays a bar code that the customer must print.
+7. The customer goes to the bank or a store which belongs to the payment network and pays in cash using the bar code they were given in step 6. Alternatively, they can pay the invoice using their online banking.
+8. Once payment is complete, Skrill receives the confirmation. Skrill sends a payment success notification to the merchant's _ **status\_url** _.
+9. Once the merchant receives a valid payment confirmation with a status value of 2 at the merchant's _ **status\_url** _ they can release the goods to the customer.
+
+**\* Not available for US and Canada merchants**
+
+![](RackMultipart20230727-1-clbscd_html_5d7e962f1e848a8b.jpg)
+
+###### Figure 7‐11: Select bank and enter name and ID number
+
+![Shape89](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Note:** If only a single cash method is supported for the customer's country instead of a list of banks to select from, only the option and logo of the single payment method is shown. For details of countries supporting cash payments, see _ **List of banks supported by country on page 7-14** _.
+
+![Shape90](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+![](RackMultipart20230727-1-clbscd_html_58ff15470fca9e8c.jpg)
+
+**Figure 7-12: Cash payment step 1 – single cash payment option available**
+
+![](RackMultipart20230727-1-clbscd_html_da6dd9a83a31f2ea.jpg)
+
+**Figure 7‐13: Redirect to the bank or payment network website for confirmation**
+
+![](RackMultipart20230727-1-clbscd_html_2ca58af801e6c8d5.jpg)
+
+**Figure 7‐14: Customer confirmation (Continued)**
+
+![](RackMultipart20230727-1-clbscd_html_d181b875db1a3d04.jpg)
+
+###### Figure 7‐15: Bar code for payment
+
+![](RackMultipart20230727-1-clbscd_html_6e4065a6430de121.jpg)
+
+**Figure 7‐16: Pending payment**
+
+**7.3.**** Refunds**
+
+Astropay supports full and partial refunds. Customers receive an email when the merchant triggers a refund. This email contains a link to a form on the Astropay website with a Skrill logo where customers specify their name, bank account, and the security code contained in the email. Astropay will then send a refund to the customer's bank. Refunds take up to two working days from receipt of these details.
+
+When the refund is executed by the merchant, an email is sent to the customer and the refund is set to pending. The refund status changes to processed when the customer provides their bank account details and Astropay sends the payment to their bank. Note that payment will still take up to two working days to reach the customer's account.
+
+![Shape91](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Warning:** If you use the refund call in the Skrill Automated Payment Interface you must ensure that your provide a _ **refund\_status\_url** _ to record the change from pending to processed.
+
+![Shape92](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+![](RackMultipart20230727-1-clbscd_html_b1366397b8998087.jpg)
+
+###### Figure 7‐17: Customer receives refund email
+
+![](RackMultipart20230727-1-clbscd_html_28cf56a78cda4e6c.jpg)
+
+**Figure 7‐18: Customer completes refund form**
+
+**7.4.**** Astropay payment method codes**
+
+The following table lists the Payment Method Codes for Astropay and their effects. These codes can be used with the Fixed Split Gateway option to launch the payment form with a single Astropay tab. They are also returned in the _ **payment\_type** _ parameter in both Gateway types (Fixed or Flexible, where enabled) to show which Astropay payment type the customer used.
+
+###### Table 7‐1: Payment method codes
+
+| **Transfer Type** | **Fixed Split Gateway Effect** | **Payment Method** |
+| --- | --- | --- |
+| Direct Bank Transfer | Shows the Bank Transfer payment tab. The bank selector only shows those banks in the customer's country which support Direct Bank Transfer rather than all banks. | ADB |
+| Manual Bank Transfer | Shows the Bank Transfer payment tab. The bank selector only shows those banks in the customer's country which support Manual Bank Transfer rather than all banks. | AOB |
+| Cash/Invoice | Shows the Cash payment tab. | ACI |
+
+**7.5.**** List of banks supported by country**
+
+![Shape93](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Note:** This list may change. Contact Skrill before implementing this payment method for an up-to- date list.
+
+![Shape94](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+###### Table 7‐2: Argentina
+
+| **Bank** | **Type** |
+| --- | --- |
+| Santander Rio | Direct bank transfer |
+| Red Link | Cash |
+| Pago Fácil | Cash |
+
+###### Table 7‐3: Brazil
+
+| **Bank** | **Type** |
+| --- | --- |
+| Itau | Direct bank transfer |
+| Banco do Brasil | Direct bank transfer |
+| Bradesco | Direct bank transfer |
+| HSBC | Manual bank transfer |
+| Caixa | Manual bank transfer |
+| Santander | Manual bank transfer |
+| Boleto | Cash |
+
+![Shape95](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif) **Note:** The Quick Checkout payment form does not currently support Portuguese. Customers must use another supported language such as English or Spanish.
+
+![Shape96](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+###### Table 7‐4: Chile
+
+| **Bank** | **Type** |
+| --- | --- |
+| webpay | Manual bank transfer |
+| Servipag | Cash |
+
+###### Table 7‐5: Colombia
+
+| **Bank** | **Type** |
+| --- | --- |
+| Bancolombia | Manual bank transfer |
+| PSE | Manual bank transfer |
+| Efecty | Cash |
+| Davivienda | Cash |
+| Almancenes Éxito | Cash |
+| Carulla | Cash |
+| Empresa de Energía del Quindio | Cash |
+| Surtimax | Cash |
+
+###### Table 7‐6: Mexico
+
+| **Bank** | **Type** |
+| --- | --- |
+| OXXO | Cash |
+| BBVA Bancomer | Cash |
+| Banamex | Cash |
+| Santander | Cash |
+
+###### Table 7‐7: Peru
+
+| **Bank** | **Type** |
+| --- | --- |
+| BBVA | Cash |
+| BCP | Cash |
+| InterBank | Cash |
+| Pago Efectivo | Cash |
+
+| ScotiaBank | Cash |
+| --- | --- |
+| **Table 7‐7: Peru (Continued)** |
+ |
+| **Bank** | **Type** |
+| Western Union | Cash |
+| **Table 7‐8: Uruguay** |
+ |
+| **Bank** | **Type** |
+| Red Pagos | Cash |
+
+![Shape97](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+##### 8.GIFT CARDS
+
+![Shape98](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+This section explains the Skrill payment flow for some popular retail gift cards available throughout the US, such as CVS Pharmacy, Dollar General and Circle K. Customers can buy gift cards at more than 31,000 point of sale locations and then use them to pay online with participating merchants.
+
+Gift card payment options support Straight Through Redirect, where customers are automatically redirected to a specific payment page if you provide the correct payment method code along with other mandatory parameters. When you set up gift card payments, this is the option we recommend.
+
+**8.1.**** Customer payment flow**
+
+1. When the customer is ready to pay, they select the relevant gift card payment method on your checkout page.
+2. The customer is redirected to the payment platform to enter their gift card number / PIN and complete their purchase.
+
+Gift cards are redeemed in real-time with the retail issuer and instantly validated with a 100% no chargeback guarantee to you.
+
+  1. **Enabling gift cards**
+
+To enable your merchant ID to accept gift card payments, contact SkrillMerchant Services.
+
+  1. **Configuration options**
+
+Once we have enabled your merchant ID to accept gift card payments, you will need to configure the payment button or buttons on your website using the correct payment method codes.
+
+###### Configuration example
+
+| https://pay.skrill.com/?merchant\_id=01111000000&amount=20.00&currency=USD&co |
+| --- |
+| untry=USA&pay\_from\_email=customeremail@domain.com& **payment\_methods=CVS** | |
+
+You have three different configuration options:
+
+- Display separate payment buttons for each gift card you accept.
+- Display one payment button to represent all gift cards you accept.
+- Display one payment button to represent gift cards along with other payment methods you accept.
+
+###### Display separate payment buttons (recommended option)
+
+With this configuration option, you display separate payment buttons on your website for each gift card you accept. When the customer clicks on a payment button, they will be redirected directly to a specific gift card payment page to complete their purchase.
+
+![](RackMultipart20230727-1-clbscd_html_9c902441399eaf37.png)
+
+**Figure 8‐1: Example redirect to the CVS gift card payment page**
+
+Configure your gift card payment buttons using the following payment method codes:
+
+**Table 8‐1: Gift card payment method codes**
+
+| **Gift card** | **Parameter** | **Example button / text requirement** |
+| --- | --- | --- |
+| CVS Pharmacy | payment\_methods=CVS | ![](RackMultipart20230727-1-clbscd_html_3e58d92d3f13a542.png) **CVS Pharmacy gift card** |
+| Dollar General | payment\_methods=DLG | ![](RackMultipart20230727-1-clbscd_html_f940e707a5a509f1.png) **Dollar General gift card** |
+| Circle K | payment\_methods=CRK | ![](RackMultipart20230727-1-clbscd_html_b7d3581c1fa55bdf.png) **Circle K gift card** |
+
+**Mandatory parameters**
+
+In order to redirect the customer directly to the relevant payment page, you must pass the payment code along with the following mandatory parameters:
+
+- Customer's first name_ **: firstname** _
+- Customer's last name_ **: lastname** _
+- Customer's email address_ **: pay\_from\_email** _
+
+For more details about these parameters refer to the _ **Quick Checkout parameters table on page 13** _.
+
+###### Display one gift cards payment button
+
+With this configuration option, you display one payment button on your website to represent all the different gift cards you accept. When the customer clicks on the payment button, they will be redirected to a card selector page where they can select their desired gift card. The customer will then be redirected again to complete their purchase on the relevant gift card payment page.
+
+![](RackMultipart20230727-1-clbscd_html_7ad9f2b7e0cadc8c.png)
+
+**Figure 8‐2: Example redirect to a gift card selector page**
+
+Configure your gift card payment button using the following payment method code:
+
+**Table 8‐2: Combined gift card payment method code**
+
+| **Gift card** | **Parameter** | **Example button / text requirement** |
+| --- | --- | --- |
+| All gift cards that your merchant ID is enabled to accept. | payment\_methods=GFC | ![](RackMultipart20230727-1-clbscd_html_1fcae3e2a6bd3e23.png) **Cash / Gift cards** |
+
+**Note:** If you have different gift card options activated to those shown in the above example, please contact your account manager for a custom button to fit your checkout requirements.
+
+###### Display one payment button for all payment methods
+
+With this configuration option, you display one payment button on your website to represent all the different payment methods you accept, such as gift cards and paysafecard. When the customer clicks on the payment button, they will be redirected to a card selector page on the Skrill gateway where they will be shown all the payment options enabled on your merchant ID. After selecting a payment method, the customer will be redirected again to the relevant payment page to complete their purchase.
+
+**Note:** Customers also follow this payment flow if you do not provide a payment method parameter.
+
+![](RackMultipart20230727-1-clbscd_html_439604a404fb80ed.jpg)
+
+**Figure 8‐3: Example redirect to a payment method selector page**
+
+Configure your payment button using payment method codes similar to the following example:
+
+**Table 8‐3: Combined payment method codes**
+
+| **Gift card** | **Parameter** | **Example button / text requirement** |
+| --- | --- | --- |
+| All gift cards that your merchant ID is enabled to accept. | payment\_methods=PSC,GFC | ![](RackMultipart20230727-1-clbscd_html_90d5ac6c062eea34.png) **Cash / Gift cards** |
+
+**Note:** If you have different card options activated to those shown in the above example, please contact your account manager for a custom button to fit your checkout requirements.
+
+![Shape99](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+##### 9.APPENDIX
+
+![Shape100](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+This appendix contains the following information:
+
+- _ **ISO 4217 currencies** _
+- _ **Language support** _
+- _**ISO country codes (3-digit)**_
+- _ **MD5 signature** _
+- _ **SHA2 signature** _
+- _ **Example HTML forms** _
+- _ **Payment method codes** _
+- _ **Failed reason codes** _
+
+  1. **ISO 4217 currencies**
+
+**Table 9‐1[:](http://www.iso.org/iso/country_codes)[ISO](http://www.iso.org/iso/country_codes)[4217](http://www.iso.org/iso/country_codes)[currencies](http://www.iso.org/iso/country_codes)[accepted](http://www.iso.org/iso/country_codes)[by](http://www.iso.org/iso/country_codes)[Skrill](http://www.iso.org/iso/country_codes)**
+
+| **AED** | Utd. Arab Emir. Dirham | **CNY** | Chinese Yuan |
+| --- | --- | --- | --- |
+| **AUD** | Australian Dollar | **KRW** | South-Korean Won |
+| **ARS** | Argentine Peso | **KWD** | Kuwaiti Dinar |
+| **USD** | U.S. Dollar | **MAD** | Moroccan Dirham |
+| **EUR** | Euro | **MYR** | Malaysian Ringgit |
+| **BGN** | Bulgarian Leva | **NOK** | Norwegian Krone |
+| **BHD** | Bahraini Dinar | **NZD** | New Zealand Dollar |
+| **CAD** | Canadian Dollar | **OMR** | Omani Rial |
+| **CHF** | Swiss Franc | **PEN** | Peruvian Sol |
+| **COP** | Colombian Peso | **PLN** | Polish Zloty |
+| **CZK** | Czech Koruna | **QAR** | Qatari Rial |
+| **DKK** | Danish Krone | **RON** | Romanian Leu New |
+| **GBP** | British Pound | **RSD** | Serbian Dinar |
+| **HKD** | Hong Kong Dollar | **SAR** | Saudi Riyal |
+| **HRK** | Croatian Kuna | **SEK** | Swedish Krona |
+| **HUF** | Hungarian Forint | **SGD** | Singapore Dollar |
+| **ILS** | Israeli Shekel | **THB** | Thailand Baht |
+| **INR** | Indian Rupee | **TND** | Tunisian Dinar |
+| **ISK** | Iceland Krona | **TRY** | New Turkish Lira |
+| **JOD** | Jordanian Dinar | **TWD** | Taiwan Dollar |
+| **NGN** | Nigerian Naira | **MEX** | Mexican Peso |
+| **CRC** | Costa Rican Colon | **CLP** | Chilean Peso |
+| **JPY** | Japanese Yen | **ZAR** | South-African Rand |
+
+  1. **Language support**
+
+Skrill supports the following languages (2-character ISO codes):
+
+###### Table 9‐2: 2‐digit ISO language codes
+
+| **BG** | Bulgarian | **JA** | Japanese |
+| --- | --- | --- | --- |
+| **CS** | Czech | **KO** | Korean |
+| **DA** | Danish | **NL** | Dutch |
+| **DE** | German | **PL** | Polish |
+| **EL** | Greek | **PT** | Portuguese |
+| **EN** | English | **RO** | Romanian |
+| **ES** | Spanish | **RU** | Russian |
+| **FI** | Finnish | **SV** | Swedish |
+| **FR** | French | **TR** | Turkish |
+| **IT** | Italian | **ZH** | Chinese |
+
+**9.3.**** ISO country codes (3‐digit)**
+
+Skrill does _ **not** _ accept customers from the following countries: Afghanistan, Cuba, Eritrea, Iran, Iraq, Japan, Kyrgyzstan, Libya, North Korea, Sudan, South Sudan, and Syria.
+
+###### Table 9‐3: 3‐digit ISO country codes
+
+| **ABW** | Aruba | **GHA** | Ghana | **NIU** | Niue |
+| --- | --- | --- | --- | --- | --- |
+| **AGO** | Angola | **GIB** | Gibraltar | **NLD** | Netherlands |
+| **AIA** | Anguilla | **GIN** | Haiti | **NOR** | Norway |
+| **ALA** | Aland Islands | **GLP** | Guadeloupe | **NPL** | Nepal |
+| **ALB** | Albania | **GMB** | Gambia | **NZL** | New Zealand |
+| **AND** | Andorra | **GNB** | Heard Island and McDonald Islands | **OMN** | Oman |
+| **ANT** | Netherlands Antilles | **GNQ** | Equatorial Guinea | **PAK** | Pakistan |
+| **ARE** | United Arab Emirates | **GRC** | Greece | **PAN** | Panama |
+| **ARG** | Argentina | **GRD** | Grenada | **PCN** | Pitcairn |
+| **ARM** | Armenia | **GRL** | Greenland | **PER** | Peru |
+| **ASM** | American Samoa | **GTM** | Guatemala | **PHL** | Philippines |
+| **ATA** | Antarctica | **GUF** | French Guiana | **PLW** | Palau |
+| **ATF** | French Southern Territories | **GUM** | Guam | **PNG** | Papua New Guinea |
+| **ATG** | Antigua and Barbuda | **GUY** | Holy See (Vatican City State) | **POL** | Poland |
+| **AUS** | Australia | **HKG** | Hong Kong | **PRI** | Puerto Rico |
+| **AUT** | Austria | **HMD** | Guinea-Bissau | **PRT** | Portugal |
+| **AZE** | Azerbaijan | **HND** | Honduras | **PRY** | Paraguay |
+| **BDI** | Burundi | **HRV** | Croatia | **PSE** | Palestinian Territory |
+| **BEL** | Belgium | **HTI** | Guinea | **PYF** | French Polynesia |
+| **BEN** | Benin | **HUN** | Hungary | **QAT** | Qatar |
+| **BFA** | Burkina Faso | **IDN** | Indonesia | **REU** | Reunion |
+| **BGD** | Bangladesh | **IMN** | Isle of Man | **ROU** | Romania |
+| **BGR** | Bulgaria | **IND** | India | **RUS** | Russian Federation |
+| **BHR** | Bahrain | **IRL** | Ireland | **RWA** | Rwanda |
+| **BHS** | Bahamas | **ISL** | Iceland | **SAU** | Saudi Arabia |
+| **BIH** | Bosnia and Herzegovina | **ISR** | Israel | **SEN** | Senegal |
+| **BLR** | Belarus | **ITA** | Italy | **SGP** | Singapore |
+
+| **BLZ** | Belize | **JAM** | Jamaica | **SGS** | South Georgia and the South Sandwich Islands |
+| --- | --- | --- | --- | --- | --- |
+| **BMU** | Bermuda | **JEY** | Jersey | **SHN** | Saint Helena |
+| **BOL** | Bolivia | **JOR** | Jordan | **SJM** | Svalbard and JanMayen |
+| **BRA** | Brazil | **JPN** | Japan | **SLB** | Solomon Islands |
+| **BRB** | Barbados | **KAZ** | Kazakhstan | **SLE** | Sierra Leone |
+| **BRN** | Brunei Darussalam | **KEN** | Kenya | **SLV** | El Salvador |
+| **BTN** | Bhutan | **KHM** | Cambodia | **SMR** | San Marino |
+| **BVT** | Bouvet Island | **KIR** | Kiribati | **SOM** | Somalia |
+| **BWA** | Botswana | **KNA** | Saint Kitts and Nevis | **SPM** | Saint Pierre and Miquelon |
+| **CAF** | Central African Republic | **KOR** | Korea, Republic of | **SRB** | Serbia |
+| **CAN** | Canada | **KWT** | Kuwait | **STP** | Sao Tome and Principe |
+| **CCK** | Cocos (Keeling) Islands | **LAO** | Lao People's Democratic Republic | **SUR** | Suriname |
+| **CHE** | Switzerland | **LBN** | Lebanon | **SVK** | Slovakia |
+| **CHL** | Chile | **LBR** | Liberia | **SVN** | Slovenia |
+| **CHN** | China | **LCA** | Saint Lucia | **SWE** | Sweden |
+| **CIV** | Cote d'Ivoire (Ivory Coast) | **LIE** | Liechtenstein | **SWZ** | Swaziland |
+| **CMR** | Cameroon | **LKA** | Sri Lanka | **SYC** | Seychelles |
+| **COD** | Congo, the Democratic Republic | **LSO** | Lesotho | **TCA** | Turks and Caicos Islands |
+| **COG** | Congo, Republic of | **LTU** | Lithuania | **TCD** | Chad |
+| **COK** | Cook Islands | **LUX** | Luxembourg | **TGO** | Togo |
+| **COL** | Colombia | **LVA** | Latvia | **THA** | Thailand |
+| **COM** | Comoros | **MAC** | Macao | **TJK** | Tajikistan |
+| **CPV** | Cape Verde | **MAF** | Saint Martin (French part) | **TKL** | Tokelau |
+| **CRI** | Costa Rica | **MAR** | Morocco | **TKM** | Turkmenistan |
+| **CXR** | Christmas Island | **MCO** | Monaco | **TLS** | East Timor |
+| **CYM** | Cayman Islands | **MDA** | Moldova | **TON** | Tonga |
+| **CYP** | Cyprus | **MDG** | Madagascar | **TTO** | Trinidad and Tobago |
+| **CZE** | Czech Republic | **MDV** | Maldives | **TUN** | Tunisia |
+
+| **DEU** | Germany | **MEX** | Mexico | **TUR** | Turkey |
+| --- | --- | --- | --- | --- | --- |
+| **DJI** | Djibouti | **MHL** | Marshall Islands | **TUV** | Tuvalu |
+| **DMA** | Dominica | **MKD** | Macedonia | **TWN** | Taiwan |
+| **DNK** | Denmark | **MLI** | Mali | **TZA** | Tanzania |
+| **DOM** | Dominican Republic | **MLT** | Malta | **UGA** | Uganda |
+| **DZA** | Algeria | **MMR** | Myanmar | **UKR** | Ukraine |
+| **ECU** | Ecuador | **MNE** | Montenegro | **UMI** | United States Minor Outlying Islands |
+| **EGY** | Egypt | **MNG** | Mongolia | **URY** | Uruguay |
+| **ERI** | Eritrea | **MNP** | Northern Mariana Islands | **USA** | United States |
+| **ESH** | Western Sahara | **MOZ** | Mozambique | **UZB** | Uzbekistan |
+| **ESP** | Spain | **MRT** | Mauritania | **VAT** | Guyana |
+| **EST** | Estonia | **MSR** | Montserrat | **VCT** | Saint Vincent and the Grenadines |
+| **ETH** | Ethiopia | **MTQ** | Martinique | **VEN** | Venezuela |
+| **FIN** | Finland | **MUS** | Mauritius | **VGB** | Virgin Islands, British |
+| **FJI** | Fiji | **MWI** | Malawi | **VIR** | Virgin Islands, U.S. |
+| **FLK** | Falkland Islands | **MYS** | Malaysia | **VNM** | Viet Nam |
+| **FRA** | France | **MYT** | Mayotte | **VUT** | Vanuatu |
+| **FRO** | Faroe Islands | **NAM** | Namibia | **WLF** | Wallis and Futuna |
+| **FSM** | Micronesia, Federated States of | **NCL** | New Caledonia | **WSM** | Samoa |
+| **GAB** | Gabon | **NER** | Niger | **YEM** | Yemen |
+| **GBR** | United Kingdom | **NFK** | Norfolk Island | **ZAF** | South Africa |
+| **GEO** | Georgia | **NGA** | Nigeria | **ZMB** | Zambia |
+| **GGY** | Guernsey | **NIC** | Nicaragua | **ZWE** | Zimbabwe |
+
+**9.4.**** MD5 signature**
+
+A hidden text field called _ **md5sig** _ is included in the form submitted to your server. The value of this field is a 128-bit message digest, expressed as a string of thirty-two hexadecimal digits in UPPERCASE. The _ **md5sig** _ is constructed by performing an MD5 calculation on a string built up by concatenating the fields returned to your _ **status\_url** _ page. This includes:
+
+- merchant\_id
+- transaction\_id
+- the uppercase MD5 value of the ASCII equivalent of the secret word submitted in the **Settings**** \> Developer Settings** section of your online Skrill account.
+- mb\_amount
+- mb\_currency
+- status
+
+The purpose of the _ **md5sig** _ field is to ensure the integrity of the data posted back to your server. You should always compare the _ **md5sig** _ field's value posted by Skrill's servers with the one you calculated. To calculate the _ **md5sig** _, you need to take the values of the fields listed above exactly as they were posted back to you, concatenate them, and perform a MD5 calculation on this string.
+
+###### Cancelled payment
+
+The MD5 hash posted on the _ **ondemand\_status\_url** _ when a Skrill 1-Tap payment has been cancelled is a concatenation of the following fields:
+
+- MERCHANT\_ID = merchant\_id
+- MERCHANT\_TRN\_ID = transaction\_id
+- The uppercase MD5 value of the ASCII equivalent of the secret word submitted in the **Settings \> Developer Settings** section of the Merchant's online Skrill account
+- REC\_PMT\_STATUS = status
+- TRN\_ID = rec\_payment\_id
+
+The MD5 hash for 1-Tap payments, posted on the _ **status\_url** _ is calculated the same way as normal payments/refunds.
+
+###### Secret word
+
+The secret word must be submitted in the **Settings \> Developer Settings** section of your Skrill Digital Wallet account before the _ **md5sig** _ can be used. The following restrictions apply when submitting your secret word:
+
+- All characters must be in lowercase
+- The length should not exceed 10 characters
+- Special characters are not permitted (for example @, %, $, etc.)
+
+![Shape101](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Note:** If the **Settings \> Developer Settings** section is not displayed in your account, contact merchantservices@skrill.com.
+
+![Shape102](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+  1. **SHA2 signature**
+
+To improve the security of the status reports, Skrill posts an additional parameter with the report called _ **sha2sig** _. This is constructed in the same way as the _ **md5** _ signature, but with a different hashing algorithm, _ **Sha2** _ (256 bits).
+
+![Shape103](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Note:** This new parameter is not available by default. To enable this option, send a request to merchantservices@skrill.com.
+
+![Shape104](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+  1. **Example HTML forms**
+
+Below are two examples of HTML forms that can be submitted to Skrill. The first one is a basic example.
+
+The second example uses several additional features currently available with Quick Checkout. You can use these forms, ensuring that the values are replaced with your own values.
+
+![Shape105](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Note:** To request a test account and test data, contact merchantservices@skrill.com.
+
+![Shape106](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+###### Simple HTML form
+
+| \<form action="https://pay.skrill.com" method="post" target="\_blank"\> |
+| --- |
+| \<input type="hidden" | name="pay\_to\_email" value="demoqco@sun-fish.com"\> |
+| \<input type="hidden" process\_payment.cgi"\> | name="status\_url" value="https://example.com/ |
+| \<input type="hidden" | name="language" value="EN"\> |
+| \<input type="hidden" | name="amount" value="39.60"\> |
+| \<input type="hidden" | name="currency" value="GBP"\> |
+| \<input type="hidden" | name="detail1\_description" value="Description:"\> |
+| \<input type="hidden" Shakespeare)"\> | name="detail1\_text" value="Romeo and Juliet (W. |
+| \<input type="submit" | value="Pay!"\> |
+| \</form\> |
+ |
+
+###### Advanced HTML form
+
+ ![Shape107](RackMultipart20230727-1-clbscd_html_552c8fb269e73a64.gif)
+
+\<form action="https://pay.skrill.com" method="post" target="\_blank"\>
+
+\<input type="hidden" name="pay\_to\_email" value="demoqco@sun-fish.com"\>
+
+| \<input type="hidden" name="transaction\_id" value="A10005"\> |
+| --- |
+| \<input type="hidden" name="return\_url" value="https://example.com/ payment\_finished.html"\> |
+| \<input type="hidden" name="cancel\_url" value="https://example.com/ payment\_cancelled.html"\> |
+| \<input type="hidden" process\_payment.cgi"\> | name="status\_url" value="https://example.com/ |
+| \<input | type="hidden" | name="language" value="EN"\> |
+| \<input | type="hidden" | name="merchant\_fields" value="customer\_number,session\_id"\> |
+| \<input | type="hidden" | name="customer\_number" value="C1234"\> |
+| \<input | type="hidden" | name="session\_ID" value="A3DFA2234"\> |
+| \<input | type="hidden" | name="pay\_from\_email" value="payer123@skrill.com"\> |
+| \<input | type="hidden" | name="amount2\_description" value="Product Price:"\> |
+| \<input | type="hidden" | name="amount2" value="29.90"\> |
+| \<input | type="hidden" | name="amount3\_description" value="Handling Fees & Charges:"\> |
+| \<input | type="hidden" | name="amount3" value="3.10"\> |
+| \<input | type="hidden" | name="amount4\_description" value="VAT (20%):"\> |
+| \<input | type="hidden" | name="amount4" value="6.60"\> |
+| \<input | type="hidden" | name="amount" value="39.60"\> |
+| \<input | type="hidden" | name="currency" value="GBP"\> |
+| \<input | type="hidden" | name="firstname" value="John"\> |
+| \<input | type="hidden" | name="lastname" value="Payer"\> |
+| \<input | type="hidden" | name="address" value="Payerstreet"\> |
+| \<input | type="hidden" | name="postal\_code" value="EC45MQ"\> |
+| \<input | type="hidden" | name="city" value="Payertown"\> |
+| \<input | type="hidden" | name="country" value="GBR"\> |
+| \<input | type="hidden" | name="detail1\_description" value="Product ID:"\> |
+| \<input | type="hidden" | name="detail1\_text" value="4509334"\> |
+| \<input | type="hidden" | name="detail2\_description" value="Description:"\> |
+| \<input Shakespeare)"\> | type="hidden" name="detail2\_text" value="Romeo and Juliet (W. |
+
+ ![Shape108](RackMultipart20230727-1-clbscd_html_63a4550ae436a7ca.gif)
+
+\<input type="hidden" name="detail3\_description" value="Special Conditions:"\>
+
+\<input type="hidden" name="detail3\_text" value="5-6 days for delivery"\>
+
+\<input type="submit" value="Pay!"\>
+
+\</form\>
+
+**9.7.**** Payment method codes**
+
+The table below describes the codes required for each payment method if passing specific payment methods in your payment request.
+
+###### Table 9‐4: Payment method codes
+
+| **Payment method** | **Value** | **Supported countries** |
+| --- | --- | --- |
+| Skrill Digital Wallet | WLT | All in table _**ISO country codes (3-digit) on page 8-3**_ |
+| Neteller | NTL | All except for: Afghanistan, Armenia, Bhutan, Bouvet Island, Myanmar, China, (Keeling) Islands, Democratic Republic of Congo, Cook Islands, Cuba, Eritrea, South Georgia and the South Sandwich Islands, Guam, Guinea, Territory of Heard Island and McDonald Islands, Iran, Iraq, Cote d'Ivoire, Kazakhstan, North Korea, Kyrgyzstan, Liberia, Libya, Mongolia, Northern Mariana Islands, Federated States of Micronesia, Marshall Islands, Palau, Pakistan, East Timor, Puerto Rico, Sierra Leone, Somalia, Zimbabwe, Sudan, Syria, Tajikistan, Turkmenistan, Uganda, United States, US Virgin Islands, Uzbekistan, and Yemen |
+| Paysafecard\* | PSC | American Samoa, Austria, Belgium, Canada, Croatia, Cyprus, Czech Republic, Denmark, Finland, France, Germany, Guam, Hungary, Ireland, Italy, Latvia, Luxembourg, Malta, Mexico, Netherlands, Northern Mariana Islands, Norway, Poland, Portugal, Puerto Rico, Romania, Slovakia, Slovenia, Spain, Sweden, Switzerland, Turkey, United Kingdom, United States Of America, and US Virgin Islands |
+| Paysafecash\* | PCH | Austria, Croatia, Hungary, Italy, Malta, Portugal, Romania, Slovenia, Spain |
+| PagoEfectivo\* | PGF | Peru |
+| **Credit/Debit Cards** |
+ |
+| All card types available in the customer's country | ACC | All in table _**ISO country codes (3-digit) on page 8-3**_ |
+| Visa | VSA | All in table _**ISO country codes (3-digit) on page 8-3**_ |
+| Mastercard | MSC | All in table _**ISO country codes (3-digit) on page 8-3**_ |
+| Visa Electron | VSE | All in table _**ISO country codes (3-digit) on page 8-3**_ (excluding US) |
+| Maestro | MAE | United Kingdom, Spain, Ireland, and Austria |
+| Carte Bleue | GCB | France |
+| Dankort | DNK | Denmark |
+| **Gift cards** |
+ |
+| CVS Pharmacy\* | CVS | US |
+| Dollar General\* | DLG | US |
+| Circle K\* | CRK | US |
+| Generic code to represent all the gift cards enabled on your merchant ID. | GFC | US |
+
+###### Table 9-4: Payment method codes (Continued)
+
+| **Payment method** | **Value** | **Supported countries** |
+| --- | --- | --- |
+| Blik | BLK | Poland |
+| **Instant Banking Options** |
+ |
+| Rapid Transfer (Online Bank Transfer)\* (Previously called Skrill Direct) | OBT/NGP | Austria, Denmark, Finland, France, Germany, Hungary, Italy, Norway, Poland, Portugal, Spain, Sweden, United Kingdom. **Note:** NGP is returned in _ **payment\_type** _ for this payment method _ **only** _ if detailed payment type information is enabled for your account. |
+| Giropay\* | GIR | Germany |
+| Direct Debit/SEPA | DID | Germany |
+| Sofort (Klarna) | SFT | Germany, Austria, Belgium, Netherlands, Italy, France, Hungary, Slovakia, Czech Republic and United Kingdom |
+| iDEAL\* (See Note below) | IDL/GCI | Netherlands **\*Note** : For this _ **payment\_method** _ you also need to pass the first name and last name of the customer in order to use the straight through redirect feature. The parameters to use for this purpose are called "firstname" and "lastname" respectively and you can find more details regarding them in table 2-1. The first two conditions above apply as normal. |
+| POLi | PLI | Australia |
+| Przelewy24 \* | PWY | Poland |
+| ePay.bg | EPD | Bulgaria |
+| Trustly\* | GLU | Austria, Belgium, Bulgaria, Czech Republic, Denmark, Estonia, Finland, Germany, Hungary, Ireland, Latvia, Lithuania, Netherlands, Romania, Slovakia, Slovenia, Spain, Sweden. |
+| Alipay\* | ALI | Customer location: China only. This is available for merchants in all countries in table _**ISO country codes (3-digit) on page 8-3**_ except China. |
+| Astropay - Online bank transfer (Direct Bank Transfer) | ADB | Argentina, Brazil |
+| Astropay - Offline bank transfer | AOB | Brazil, Chile, China, Colombia |
+| Astropay - Cash (Invoice) | ACI | Argentina, Brazil, Chile, China, Colombia, Mexico, Peru, Uruguay |
+| Rapyd Bank Redirect | RBR | Brazil, Chile, Columbia, Mexico, Peru |
+| Cash payments\* | CHP | Peru, Brazil, Mexico, Chile, Ecuador, Costa Rica, Panama, Colombia |
+| Online banking\* | ONB | Peru, Brazil, Mexico, Chile, Ecuador, Costa Rica, Panama, Colombia |
+| PIX\* | SPX | Brazil |
+| MACH\* | MAH | Chile |
+| Boleto\* | BLT | Brazil |
+| MB WAY | MBW | Portugal |
+| Multibanco | MUB | Portugal |
+| Rapyd Ewallet Redirect | RER | Indonesia, Philippines (supports various suboptions listed below): |
+| Gcash \* | GCH | Philippines |
+| GrabPay \* | GRP | Philippines |
+| Coins.ph \* | CNS | Philippines |
+| Dana \* | DNA | Indonesia |
+| LinkAja eWallet \* | LNJ | Indonesia |
+| Khipu\* | KHP | Chile |
+| SPEI\* | SPI | Mexico |
+
+• \* Payment method supports Straight Through Redirect. For more information how to implement straight through redirect flow, see Table 4-3 on page 38.
+
+###### 9.7.1.Alipay
+
+The Alipay payment method is restricted to customers from China.
+
+![Shape109](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Note:** Only merchants outside China can offer this payment method
+
+![Shape110](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+The following currencies are supported: EUR, USD, GBP, HDK, and SGD. Other currencies will be processed but Skrill will convert the payment amount to Euros and charge the merchant a conversion fee, see[https://www.skrill.com/en/fees/](https://www.skrill.com/en/fees/)[f](https://www.skrill.com/en/fees/)or details. There are two integration options for Alipay:
+
+- Straight through redirect.
+- Payment tab selection.
+
+These methods are described in more detail below.
+
+**Straight‐through redirect**
+
+A straight-through redirect bypasses the Quick Checkout form and sends the payment details direct to Alipay. To use this method you need to first ensure your merchant account is configured for the Fixed payment option. The next step is to provide the customer's email in the _ **pay\_from\_email** _ parameter and pass a single _ **payment\_method** _ code, ALI as part of the payment request. If you don't pass the _ **pay\_from\_email** _ parameter, the Quick Checkout payment form will be displayed. The customer will see a prompt asking them to enter their email before continuing to Alipay.
+
+**Payment tab selection**
+
+If you use the Fixed payment option and pass more than one payment method code including the ALI code Alipay will appear as a standard payment tab on the form for Chinese customers. Alipay will also appear as a standard payment tab for Chinese customers if the merchant account is configured to use the Flexible payment option.
+
+###### 9.7.2.Alipay customs declaration
+
+If you are shipping physical goods to customers in China paying with Alipay, you will need to make a customs declaration. This declaration should be made immediately after a successful payment. Skrill provide two MQI API calls for this purpose: one call to submit a customs declaration and a second call to check the status of an existing declaration.
+
+Before continuing, you must first enable the MQI, set up an API/MQI password, and specify an IP range from which MQI calls can be made. Refer to the introductory section of the[Skrill](https://www.skrill.com/en/business/integration/) AutomatedPayment Interface Guidefor information about enabling and configuring the MQI.
+
+Once you have enabled the MQI, you can use the two calls. These calls are described in detail below.
+
+**Send a customs declaration**
+
+This call sends a customs declaration about an Alipay purchase to Chinese customs. The request contains the merchant's Skrill account email and MQI/API password (in MD5 form) along with information about the payment such as transaction reference, amount, the merchant's identification details and the selected customs to which the purchased item will be shipped. Alipay verifies the request details to check that they match a successful payment registered in their system and then sends them on to Chinese customs. Finally, Alipay returns a response to the merchant (via Skrill) with the associated transaction ID for the payment (Alipay's transaction ID) and a customs declaration number.
+
+| **Method** | **Endpoint** | **Description** |
+| --- | --- | --- |
+| POST | https://api.skrill.com/mqi/customs/ alipay/ | Send customs declaration to Alipay customs API |
+
+You should add the following header to your HTTP request:
+
+Content-Type: application/json;
+
+or
+
+Content-Type: application/json; charset="UTF8"
+
+if you are including UTF8 characters in the request. Example request:
+
+![Shape111](RackMultipart20230727-1-clbscd_html_28668f9bf22ddffe.gif)
+
+**Table 9‐5: Request parameters**
+
+| **Parameter** | **Maximum** **length (bytes)** | **Required** | **Description** |
+| --- | --- | --- | --- |
+| email | n/a | Yes | The email address of your merchant account. |
+| password | n/a | Yes | MD5 of the MQI/API password for your merchant account. |
+| transactionId | n/a | Yes | The Skrill IDof the transaction for which you are making a customs declaration. This is the _ **mb\_transaction\_id** _ value received in the payment status response. |
+
+**Table 9-5: Request parameters (Continued)**
+
+| **Parameter** | **Maximum** **length (bytes)** | **Required** | **Description** |
+| --- | --- | --- | --- |
+| outRequestNumber | 32 | Yes | Unique customs transaction ID. You must ensure that you generate a unique value for this field each time you make a request. |
+| amount | n/a | Yes | Indicates the declared amount for customs in Yuan (CNY) to 2 decimal places, for example 20.00. This is the value of the goods and excludes all taxes and shipping costs. Note: This value should not exceed the payment transaction amount. |
+| merchantCustomsCode | 20 | Yes | The merchant's registration code at customs. |
+| merchantCustomsName | 256 | Yes | The merchant's registration name at customs. |
+| **Parameter** | **Maximum** **length (bytes)** | **Required** | **Description** |
+| customsPlace | N/A | Yes | The customs location at which the package is expected to arrive. Accepts the following values:
+- HANGZHOU - Hangzhou Customs Dis- trict People's Republic of China.
+- ZHENGZHOU - Zhengzhou Customs
+District of People's Republic of China (bonded logistics center).
+- GUANGZHOU - Guangzhou Customs
+District People's Republic of China
+- CHONGQING - Chongqing Customs
+District People's Republic of China.
+- NINGBO - Ningbo Customs District People's Republic of China.
+- HENAN - Customs in Henan (compre- hensive bonded zone).
+ |
+
+Example of a successful response:
+
+![Shape112](RackMultipart20230727-1-clbscd_html_34b4fdcd0b0c934e.gif)
+
+**Table 9-6: Successful response parameters**
+
+| **Parameter** | **Description** |
+| --- | --- |
+| alipayTrnId | The ID of the Alipay transaction. |
+| alipayDeclarationNumber | The customs declaration serial number from Alipay. |
+
+A response of this form indicates that a successful customs declaration has been made.
+
+Example showing a failed response from Alipay:
+
+![Shape113](RackMultipart20230727-1-clbscd_html_c76c82dcd060c88e.gif)
+
+ ![Shape114](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Note:** Both successful and failed responses return a HTTP 200 Status code. Example of a response with invalid parameters:
+
+![Shape115](RackMultipart20230727-1-clbscd_html_4e147bd5b25e9bd4.gif)
+
+**Table 9-7: Unsuccessful response parameters**
+
+| **Parameter** | **Description** |
+| --- | --- |
+| code | The error code. See _ **Table 8-16** _ below for a list of values. |
+| message | The detailed description of the error. See _ **Table 8-16** _ below for a list of values. |
+
+**Table 9-8: Error codes**
+
+| **Code** | **Message** |
+| --- | --- |
+| INVALID\_TRANSACTION\_S TATUS | Customs declaration is not allowed for transactions which are not yet completed or have been refunded. |
+| INVALID\_PARAMETER | Different descriptions are possible, based on which parameter is invalid. Here are some variants:
+- Invalid parameter format.
+- outRequestNumber must not exceed the specified length.
+ |
+| OUT\_REQUEST\_NUMBER \_ALREADY\_USED | The same request number (out\_request\_number) is used for multiple requests. |
+| ALREADY\_DECLARED | Customs declaration has already been registered. |
+| REQUEST\_AMOUNT\_EXCE EDED | The declared amount exceeds the transaction amount. |
+| TRANSACTION\_NOT\_FOU ND | This transaction is not found in Alipay's system. |
+| ALIPAY\_COMMUNICATIO N\_ERROR | Error occurred during the communication with Alipay. |
+| MISSING\_PARAMETER | **\<parameter\>** must not be null or empty |
+
+**Table 9-8: Error codes (Continued)**
+
+| **Code** | **Message** |
+| --- | --- |
+| CANNOT\_LOGIN | No associated error message - this is used for incorrect password/ email errors |
+| BAD\_REQUEST | Shows the line and column where the error occurred in the request |
+
+**Check the status of a customs declaration**
+
+This call is used to return details about a customs declaration for a specific Skrill transaction. If a customs declaration exists for this transaction, the call returns a response with the associated transaction ID for the payment in Alipay's system and a customs declaration number.
+
+| **Method** | **Endpoint** | **Description** |
+| --- | --- | --- |
+| GET | https://api.skrill.com/mqi/customs/ alipay/{id} /mqi/customs/alipay/ {id}?email={email}&password={password } | Check the status of a customs declaration |
+
+**Example:**
+
+[https://api.skrill.com/mqi/customs/alipay/1705513403?email=merchant@sun](https://api.skrill.com/mqi/customs/alipay/1705513403?email=merchant%40sun-)[-](https://api.skrill.com/mqi/customs/alipay/1705513403?email=merchant%40sun-)
+
+fish.com&password=1bw8e40ebe9759b55948bbce8aaa460d
+
+The parameters for this call are as follows:
+
+- email (required) - The email address of the merchant's Skrill account
+- password (required) - The MD5 of the merchant's password
+- id (required) - the Skrill transaction ID of the transaction that you want to query. This is the _ **mb\_transaction\_id** _ status response parameter.
+
+![Shape116](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+**Note:** Both successful and failed responses return a HTTP 200 Status code.
+
+![Shape117](RackMultipart20230727-1-clbscd_html_9451e83f8c4be39c.gif)
+
+Example of a successful response:
+
+![Shape118](RackMultipart20230727-1-clbscd_html_8d7dd984b73dadcc.gif)
+
+Example of a failed response:
+
+![Shape119](RackMultipart20230727-1-clbscd_html_ecd09cfdbf09defe.gif)
+
+**9.8.**** Failed reason codes**
+
+The table below contains all possible values of the _ **failed\_reason\_code** _ parameter and their corresponding meanings. Failed reason codes are mappings of codes Skrill receives from external processors and failures due to internal procedures.
+
+###### Table 9-9: Failed reason codes
+
+| **Code** | **Description** |
+| --- | --- |
+| 01 | Referred by Card Issuer |
+| 02 | Invalid Merchant. Merchant account inactive. |
+| 03 | Pick-up card |
+| 04 | Declined by Card Issuer |
+| 05 | Insufficient funds |
+| 06 | Merchant/NETELLER/Processor declined |
+| 07 | Incorrect PIN |
+| 08 | PIN tries exceed - card blocked |
+| 09 | Invalid Transaction |
+| 10 | Transaction frequency limit exceeded |
+| 11 | Invalid Amount format. Amount too high. Amount too low. Limit Exceeded. |
+| 12 | Invalid credit card or bank account |
+| 13 | Invalid card Issuer |
+| 15 | Duplicate transaction reference |
+| 19 | Authentication credentials expired/disabled/locked/invalid. Cannot authenticate. Request not authorized. |
+| 20 | Neteller member is in a blocked country/state/region/geolocation |
+| 22 | Unsupported Accept header or Content type |
+| 24 | Card expired |
+| 27 | Requested API function not supported (legacy function) |
+| 28 | Lost/stolen card |
+| 30 | Format Failure |
+| 32 | Card Security Code (CVV2/CVC2) Check Failed |
+| 34 | Illegal Transaction |
+| 35 | Member/Merchant not entitled/authorized. Account closed. Unauthorized access. |
+| 37 | Card restricted by Card Issuer |
+| 38 | Security violation |
+| 42 | Card blocked by Card Issuer |
+
+###### Table 9-9: Failed reason codes (Continued)
+
+| **Code** | **Description** |
+| --- | --- |
+| 44 | Card Issuing Bank or Network is not available |
+| 45 | Processing error - card type is not processed by the authorization centre |
+| 51 | System error |
+| 58 | Transaction not permitted by acquirer |
+| 63 | Transaction not permitted for cardholder |
+| 64 | Invalid accountId/country/currency/customer/email/field/merchant reference/ merchant account currency/term length/verification code. Account not found/ disabled. Entity not found. URI not found. Existing member email. Plan already exists. Bad request. |
+| 67 | BitPay session expired |
+| 68 | Referenced transaction has not been settled |
+| 69 | Referenced transaction is not fully authenticated |
+| 70 | Customer failed 3DS verification |
+| 80 | Fraud rules declined |
+| 98 | Error in communication with provider |
+| 99 | Other |
+| 104 | PSC Customer name matching failed |
+
+
+###### Version Control
+
+| **Date** | **Version** | **Description** |
+| --- | --- | --- |
+| September 2013 | 6.2 | New guide template and updated content, including new Quick Checkout pages. |
+| October 2013 | 6.3 | Changes to description of Payment Method Codes appendix. |
+| November 2013 | 6.4 | Removal of Latvian currency. |
+| December 2013 | 6.5 | Addition of credit card brands when passing payment methods, plus new screenshots. |
+| February 2014 | 6.6 | Changes to Skrill 1-tap. |
+| May2014 | 6.7 | Removal of Laser. Addition of Paysafecard. |
+| September 2014 | 6.8 | New Quick Checkout pages and functionality. New structure to the guide. Addition of Trustly payment method code. |
+| November 2014 | 6.9 | Addition of mobile wallet payment service and changes to screens, guide rewrite. |
+| January 2015 | 7.0 | Changes made to the coverage of Visa Electron, JCB & Diners |
+| April 2015 | 7.1 | Updated the URL for merchants to post transactions to https:// [www.skrill.com/app/payment.pl](http://www.skrill.com/app/payment.pl)Removed Slovakian Koruna, Estonian Kroon and Lithuanian Litas currencies from ISO 4217 currency table. Removed individual bank payment method codes for Poland and other minor updates to payment method codes. |
+| June 2015 | 7.2 | Updated the Skrill Wallet section to show the new mobile optimised Wallet Checkout User Interface |
+| November 2015 | 7.3 | Described the new feature to allow merchants to calculate VAT/ Sales Tax. Added the Resurs and Alipay payment methods. Updated the URL for merchants to post transactions to https:// pay.skrill.com |
+| March 2016 | 7.4 | Updated the Failed Reason Code table Added Neteller to the list of available payment methods. Added Alipay Customs Declaration call. |
+| June 2016 | 7.5 | Added Straight Through Redirect support for Neteller payment method. Changed the list of supported countries based on the new Paysafe market presence policy. Added Astropay and Unionpay payment methods. ELV payment method renamed to SEPA. Payment logo changed. Skrill Direct method renamed Rapid Transfer. Payment logo changed. Poland added to list of supported countries. |
+| October 2016 | 7.6 | Added the BitCoin payment method. Removal of Japan from list of supported countries. |
+| December 2016 | 7.7 | Updated Astropay details. |
+| January 2017 | 7.8 | Updated Trustly and Rapid Transfer supported countries. |
+| March 2017 | 7.9 |  |
+| July 2017 | 7.9 | Added Denmark, Finland and Sweden to Rapid Transfer supported countries. Updated brand-centre URL and added failed reason codes 20, 68 and 69. Updated other failed reason codes. |
+| August 2017 | 7.9 | Added Norway to list of countries supporting Rapid Transfer. |
+| September 2017 | 7.9 | Changed Sofort icon to Klarna. |
+| October 2017 | 7.9 | Removed Banco de Occidente from Colombia. |
+| December 2017 | 7.9 | Added iDEAL payment method GCI. |
+| January 2018 | 7.9 | Added language support appendix. Corrected failure code 99. |
+| February 2018 | 7.9 | Added Recurring Billing and Secure Restriction. Added Rapid Transfer mandatory field. |
+| March 2018 | 7.9 | Added Colombian Peso as a handled currency. |
+| April 2018 | 7.9 | Added Paysafecash as a payment method. |
+| December 2018 | 7.9 | Added new sections to the Skrill 1-Tap Payments chapter. |
+| July 2021 | 8.0 | Removed references to Bitcoin and UnionPay. |
+| Sep 2021 | 8.1 | Updated four parameters in the guide. |
+| Sep 2022 | 8.2 | Updated new payment methods. |
+| Sep 2022 | 8.3 | Replaced old gateway screens. |
+| Dec 2022 | 8.4 | Added new QCO parameters. |
+| Dec 2022 | 8.5 | Added Blik payment method. |
+| Feb 2023 | 8.6 | Added MB WAY, Multibanco payment method. |
+| Apr 2023 | 8.7 | Replaced digitalShopId with the website\_id parameter. Added Rapyd Ewallet Redirect payment codes. Removed references to iFrames. |
+| Apr 2023 | 8.8 | Added section on gift cards. |
+| May 2023 | 8.9 | Updated the supported languages. |
+| June 2023 | 9.0 | Updated Skrill IP ranges. |
+| July 2023 | 10.0 | Updated payment methods. |
